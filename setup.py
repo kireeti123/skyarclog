@@ -1,5 +1,5 @@
 """
-Setup configuration for skyarclog package.
+Setup configuration for advanced_logging package.
 """
 
 from setuptools import setup, find_packages
@@ -7,18 +7,18 @@ from setuptools import setup, find_packages
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open("skyarclog/requirements.txt", "r", encoding="utf-8") as fh:
+with open("advanced_logging/requirements.txt", "r", encoding="utf-8") as fh:
     requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
 
 setup(
-    name="skyarclog",
+    name="advanced_logging",
     version="1.0.0",
     author="Krishna Kireeti Kompella",
     author_email="kireeti.k.k@gmail.com",
     description="A comprehensive logging framework with multiple formatters and listeners",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/kireeti123/skyarclog",
+    url="https://github.com/kireeti123/advanced_logging",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
