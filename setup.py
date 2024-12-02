@@ -19,18 +19,8 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 class PostInstallCommand(install):
     """Post-installation for installation mode."""
     def run(self):
-        # Run parent install first
         install.run(self)
-        
-        # Get the package's config directory
-        package_config_dir = os.path.join(os.path.dirname(__file__), 'skyarclog', 'config')
-        default_config_file = os.path.join(package_config_dir, 'logging_config.json')
-        
-        # Create logging_config.json in the current directory if it doesn't exist
-        target_config_file = "logging_config.json"
-        if not os.path.exists(target_config_file):
-            shutil.copy2(default_config_file, target_config_file)
-            print(f"Created default {target_config_file} in the current directory")
+        print("skyarclog package installed successfully!")
 
 setup(
     name="skyarclog",
@@ -41,9 +31,10 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/kireeti123/skyarclog",
-    packages=find_packages(include=['skyarclog', 'skyarclog.*']),
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     package_data={
-        'skyarclog': ['config/*.json', 'config/*.md'],
+        '': ['config/*.json', 'config/*.md'],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
