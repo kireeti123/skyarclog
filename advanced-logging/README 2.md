@@ -1,6 +1,6 @@
-# SkyArcLog
+# Advanced Logging Framework
 
-A comprehensive, secure, and high-performance logging framework for Python applications.
+A powerful, flexible, and easy-to-use Python logging framework with support for multiple output formats and cloud integrations.
 
 ## 🚀 Quick Start
 
@@ -8,28 +8,28 @@ A comprehensive, secure, and high-performance logging framework for Python appli
 
 ```bash
 # Basic installation
-pip install skyarclog
+pip install advanced-logging-framework
 
 # Install with database support
-pip install skyarclog[mysql]      # MySQL support
-pip install skyarclog[postgresql] # PostgreSQL support
-pip install skyarclog[mongodb]    # MongoDB support
+pip install advanced-logging-framework[mysql]      # MySQL support
+pip install advanced-logging-framework[postgresql] # PostgreSQL support
+pip install advanced-logging-framework[mongodb]    # MongoDB support
 
 # Install with cloud support
-pip install skyarclog[azure]  # Azure support
-pip install skyarclog[aws]    # AWS support
-pip install skyarclog[gcp]    # Google Cloud support
+pip install advanced-logging-framework[azure]  # Azure support
+pip install advanced-logging-framework[aws]    # AWS support
+pip install advanced-logging-framework[gcp]    # Google Cloud support
 
 # Install everything
-pip install skyarclog[all]
+pip install advanced-logging-framework[all]
 ```
 
 ### Basic Usage
 
 ```python
-from skyarclog import LogManager
-from skyarclog.formatters import JSONFormatter
-from skyarclog.listeners import ConsoleListener, FileListener
+from advanced_logging import LogManager
+from advanced_logging.formatters import JSONFormatter
+from advanced_logging.listeners import ConsoleListener, FileListener
 
 # Get the logging manager (singleton)
 log_manager = LogManager.get_instance()
@@ -71,9 +71,9 @@ log_manager.error("Something went wrong", {"error_code": 500})
 ### 1. Basic File Logging
 
 ```python
-from skyarclog import LogManager
-from skyarclog.formatters import TextFormatter
-from skyarclog.listeners import FileListener
+from advanced_logging import LogManager
+from advanced_logging.formatters import TextFormatter
+from advanced_logging.listeners import FileListener
 
 log_manager = LogManager.get_instance()
 log_manager.add_formatter(TextFormatter())
@@ -85,9 +85,9 @@ log_manager.info("User logged in", {"user_id": 123})
 ### 2. JSON Logging to Console
 
 ```python
-from skyarclog import LogManager
-from skyarclog.formatters import JSONFormatter
-from skyarclog.listeners import ConsoleListener
+from advanced_logging import LogManager
+from advanced_logging.formatters import JSONFormatter
+from advanced_logging.listeners import ConsoleListener
 
 log_manager = LogManager.get_instance()
 log_manager.add_formatter(JSONFormatter())
@@ -103,9 +103,9 @@ log_manager.debug("Processing request", {
 ### 3. Database Logging (PostgreSQL)
 
 ```python
-from skyarclog import LogManager
-from skyarclog.formatters import JSONFormatter
-from skyarclog.listeners import PostgreSQLListener
+from advanced_logging import LogManager
+from advanced_logging.formatters import JSONFormatter
+from advanced_logging.listeners import PostgreSQLListener
 
 log_manager = LogManager.get_instance()
 log_manager.add_formatter(JSONFormatter())
@@ -125,9 +125,9 @@ log_manager.error("Database connection failed", {
 ### 4. Cloud Logging (AWS CloudWatch)
 
 ```python
-from skyarclog import LogManager
-from skyarclog.formatters import JSONFormatter
-from skyarclog.listeners import CloudWatchListener
+from advanced_logging import LogManager
+from advanced_logging.formatters import JSONFormatter
+from advanced_logging.listeners import CloudWatchListener
 
 log_manager = LogManager.get_instance()
 log_manager.add_formatter(JSONFormatter())
@@ -235,8 +235,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🆘 Need Help?
 
 - Check our [FAQ](FAQ.md)
-- Open an [Issue](https://github.com/yourusername/skyarclog/issues)
-- Read our [Wiki](https://github.com/yourusername/skyarclog/wiki)
+- Open an [Issue](https://github.com/yourusername/advanced-logging/issues)
+- Read our [Wiki](https://github.com/yourusername/advanced-logging/wiki)
 
 ## 🌟 Star the Project
 

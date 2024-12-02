@@ -1,0 +1,38 @@
+{
+    "log_level": "INFO",
+    "formatters": ["json"],
+    "security": {
+        "encryption": {
+            "enabled": true,
+            "type": "aes-gcm",
+            "key_rotation_interval": "7d"
+        },
+        "signatures": {
+            "enabled": true,
+            "key_rotation_interval": "30d"
+        },
+        "validation": {
+            "enabled": true,
+            "chain_size": 100,
+            "export_path": "logs/chain.json"
+        }
+    },
+    "listeners": {
+        "file": {
+            "enabled": true,
+            "path": "logs/secure.log",
+            "rotate": true,
+            "max_size": "10MB",
+            "backup_count": 5
+        },
+        "elasticsearch": {
+            "enabled": true,
+            "hosts": ["http://localhost:9200"],
+            "index_prefix": "secure-logs",
+            "username": "elastic",
+            "password": "secret",
+            "ssl_verify": true,
+            "ca_certs": "/path/to/ca.crt"
+        }
+    }
+}
