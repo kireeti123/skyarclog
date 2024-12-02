@@ -1,12 +1,13 @@
 """
-Cloud logging example using Azure, AWS, and GCP listeners.
+Cloud logging example using various cloud service listeners.
 """
 
-from advanced_logging import LogManager
-from advanced_logging.formatters import JSONFormatter
-from advanced_logging.listeners import (
-    AzureAppInsightsListener,
+import os
+from skyarclog import LogManager
+from skyarclog.formatters import JSONFormatter
+from skyarclog.listeners import (
     AWSCloudWatchListener,
+    AzureLogAnalyticsListener,
     GCPStackdriverListener
 )
 
@@ -17,10 +18,11 @@ def setup_logging():
     # Add JSON formatter (required for cloud services)
     log_manager.add_formatter(JSONFormatter())
     
-    # Add Azure Application Insights listener
-    azure_listener = AzureAppInsightsListener(
-        connection_string="InstrumentationKey=your-key-here",
-        service_name="MyService",
+    # Add Azure Log Analytics listener
+    azure_listener = AzureLogAnalyticsListener(
+        workspace_id="your-workspace-id",
+        workspace_key="your-workspace-key",
+        log_type="MyService",
         attributes={
             "environment": "production",
             "region": "us-west"

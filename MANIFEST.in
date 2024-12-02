@@ -1,7 +1,7 @@
 include LICENSE
 include README.md
-include advanced_logging/requirements.txt
-recursive-include advanced_logging *.py
-recursive-include advanced_logging/config *.json
+include skyarclog/src/requirements.txt
+recursive-include skyarclog/src *.py
+recursive-include skyarclog/src/config/config *.json
 recursive-exclude * __pycache__
 recursive-exclude * *.py[cod]

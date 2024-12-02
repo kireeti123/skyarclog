@@ -14,20 +14,20 @@
     },
     "formatters": {
         "json": {
-            "class": "advanced_logging.formatters.JSONFormatter",
+            "class": "skyarclog.formatters.JSONFormatter",
             "include_timestamp": true,
             "include_level": true,
             "include_logger_name": true
         },
         "text": {
-            "class": "advanced_logging.formatters.TextFormatter",
+            "class": "skyarclog.formatters.TextFormatter",
             "format": "[%(asctime)s] %(levelname)s - %(message)s"
         }
     },
     "listeners": {
         "console": {
             "enabled": true,
-            "class": "advanced_logging.listeners.ConsoleListener",
+            "class": "skyarclog.listeners.ConsoleListener",
             "formatter": "text",
             "level": "INFO",
             "colors": {
@@ -46,7 +46,7 @@
         },
         "file": {
             "enabled": true,
-            "class": "advanced_logging.listeners.FileListener",
+            "class": "skyarclog.listeners.FileListener",
             "formatter": "json",
             "filename": "app.log",
             "max_size": 10485760,
@@ -55,7 +55,7 @@
         },
         "mssql": {
             "enabled": false,
-            "class": "advanced_logging.listeners.MSSQLListener",
+            "class": "skyarclog.listeners.MSSQLListener",
             "formatter": "json",
             "connection_string_secret": "mssql-connection-string",
             "table": "application_logs",
@@ -67,7 +67,7 @@
         },
         "postgresql": {
             "enabled": false,
-            "class": "advanced_logging.listeners.PostgreSQLListener",
+            "class": "skyarclog.listeners.PostgreSQLListener",
             "formatter": "json",
             "connection_string_secret": "postgresql-connection-string",
             "table": "application_logs",
@@ -79,7 +79,7 @@
         },
         "mongodb": {
             "enabled": false,
-            "class": "advanced_logging.listeners.MongoDBListener",
+            "class": "skyarclog.listeners.MongoDBListener",
             "formatter": "json",
             "connection_string_secret": "mongodb-connection-string",
             "database": "logs",
@@ -89,7 +89,7 @@
         },
         "cassandra": {
             "enabled": false,
-            "class": "advanced_logging.listeners.CassandraListener",
+            "class": "skyarclog.listeners.CassandraListener",
             "formatter": "json",
             "connection_string_secret": "cassandra-connection-string",
             "keyspace": "logs",
@@ -100,7 +100,7 @@
         },
         "redis": {
             "enabled": false,
-            "class": "advanced_logging.listeners.RedisListener",
+            "class": "skyarclog.listeners.RedisListener",
             "formatter": "json",
             "host": "localhost",
             "port": 6379,
@@ -111,7 +111,7 @@
         },
         "elasticsearch": {
             "enabled": false,
-            "class": "advanced_logging.listeners.ElasticsearchListener",
+            "class": "skyarclog.listeners.ElasticsearchListener",
             "formatter": "json",
             "hosts": ["http://localhost:9200"],
             "index_prefix": "logs",
@@ -122,7 +122,7 @@
         },
         "aws": {
             "enabled": false,
-            "class": "advanced_logging.listeners.AWSCloudWatchListener",
+            "class": "skyarclog.listeners.AWSCloudWatchListener",
             "formatter": "json",
             "region": "us-west-2",
             "log_group": "application-logs",
@@ -134,7 +134,7 @@
         },
         "azure": {
             "enabled": false,
-            "class": "advanced_logging.listeners.AzureLogAnalyticsListener",
+            "class": "skyarclog.listeners.AzureLogAnalyticsListener",
             "formatter": "json",
             "workspace_id": "",
             "shared_key": "",
@@ -144,7 +144,7 @@
         },
         "gcp": {
             "enabled": false,
-            "class": "advanced_logging.listeners.GCPStackdriverListener",
+            "class": "skyarclog.listeners.GCPStackdriverListener",
             "formatter": "json",
             "project_id": "",
             "log_name": "application-logs",
@@ -154,7 +154,7 @@
         },
         "azure_app_insights": {
             "enabled": false,
-            "class": "advanced_logging.listeners.AzureAppInsightsListener",
+            "class": "skyarclog.listeners.AzureAppInsightsListener",
             "formatter": "json",
             "instrumentation_key_secret": "appinsights-instrumentation-key",
             "enable_local_storage": true,

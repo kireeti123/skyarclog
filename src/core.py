@@ -10,7 +10,7 @@ from datetime import datetime
 from .formatters import BaseFormatter
 from .listeners import BaseListener
 from .security import LogEncryption, LogSignature, LogValidator
-from advanced_logging.async_worker import AsyncWorker
+from async_worker import AsyncWorker
 
 class LogManager:
     """Thread-safe singleton log manager with built-in security."""

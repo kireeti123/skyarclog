@@ -1,10 +1,11 @@
 """
-Example demonstrating how to use the Microsoft SQL Server listener
+MSSQL logging example.
 """
 
-from advanced_logging import LogManager
-from advanced_logging.formatters import JSONFormatter
-from advanced_logging.listeners import MSSQLListener
+import os
+from skyarclog import LogManager
+from skyarclog.formatters import JSONFormatter
+from skyarclog.listeners import MSSQLListener
 
 # Initialize the log manager
 log_manager = LogManager.get_instance()

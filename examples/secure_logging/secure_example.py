@@ -1,13 +1,13 @@
 """
-Secure logging example with encryption, signatures, and tamper detection.
+Secure logging example with encryption and digital signatures.
 """
 
 import os
 from datetime import datetime
-from advanced_logging import LogManager
-from advanced_logging.formatters import JSONFormatter
-from advanced_logging.listeners import FileListener, ElasticsearchListener
-from advanced_logging.security import LogEncryption, LogSignature, LogValidator
+from skyarclog import LogManager
+from skyarclog.formatters import JSONFormatter
+from skyarclog.listeners import FileListener, ElasticsearchListener
+from skyarclog.security import LogEncryption, LogSignature, LogValidator
 
 def setup_secure_logging():
     """Setup secure logging with all security features enabled."""

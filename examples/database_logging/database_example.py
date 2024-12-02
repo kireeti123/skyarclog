@@ -3,9 +3,9 @@ Database logging example using various database listeners.
 """
 
 import os
-from advanced_logging import LogManager
-from advanced_logging.formatters import JSONFormatter
-from advanced_logging.listeners import (
+from skyarclog import LogManager
+from skyarclog.formatters import JSONFormatter
+from skyarclog.listeners import (
     SQLiteListener,
     MySQLListener,
     PostgreSQLListener,
