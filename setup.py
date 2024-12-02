@@ -19,9 +19,9 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/kireeti123/skyarclog",
-    packages=find_packages(include=['advanced_logging', 'advanced_logging.*']),
+    packages=find_packages(include=['skyarclog', 'skyarclog.*']),
     package_data={
-        'advanced_logging': ['config/*.json', 'config/*.md'],
+        'skyarclog': ['config/*.json', 'config/*.md'],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
