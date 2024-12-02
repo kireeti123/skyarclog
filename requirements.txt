@@ -1,0 +1,9 @@
+pyodbc>=4.0.39
+cryptography>=41.0.0
+elasticsearch>=8.9.0
+redis>=5.0.0
+cassandra-driver>=3.28.0
+pymongo>=4.5.0
+mysql-connector-python>=8.1.0
+psycopg2-binary>=2.9.9
+pymssql>=2.2.10
