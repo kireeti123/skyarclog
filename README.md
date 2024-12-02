@@ -1,243 +1,272 @@
-# SkyArcLog
+# SkyArcLog - Advanced Logging Framework
 
-A comprehensive, secure, and high-performance logging framework for Python applications.
+A comprehensive, secure, and high-performance logging framework with centralized configuration, key vault integration, and support for multiple database platforms.
 
-## 🚀 Quick Start
+## Features
 
-### Installation
+### 1. Key Vault Integration
+- Support for multiple cloud providers:
+  - Azure Key Vault
+  - AWS Secrets Manager
+  - Google Cloud Secret Manager
+- Secure connection string management
+- Environment variable substitution
+- Flexible configuration
 
-```bash
-# Basic installation
-pip install skyarclog
+### 2. Database Support
+- MSSQL
+- PostgreSQL
+- MongoDB
+- Cassandra
+- Elasticsearch
+- Redis
 
-# Install with database support
-pip install skyarclog[mysql]      # MySQL support
-pip install skyarclog[postgresql] # PostgreSQL support
-pip install skyarclog[mongodb]    # MongoDB support
+### 3. Performance Features
+- Two-tier caching system:
+  - In-memory LRU cache
+  - SQLite-based disk cache
+- Automatic resource management
+- Performance monitoring
+- Dynamic scaling
+- Throttling capabilities
 
-# Install with cloud support
-pip install skyarclog[azure]  # Azure support
-pip install skyarclog[aws]    # AWS support
-pip install skyarclog[gcp]    # Google Cloud support
+### 4. Monitoring & Analytics
+- Real-time metrics collection
+- Resource usage tracking
+- Performance reporting
+- Health checks
+- Cache statistics
 
-# Install everything
-pip install skyarclog[all]
-```
+### 5. Security
+- Key vault-based secret management
+- Encrypted connections
+- Secure credential handling
+- Access control integration
 
-### Basic Usage
-
-```python
-from skyarclog import LogManager
-from skyarclog.formatters import JSONFormatter
-from skyarclog.listeners import ConsoleListener, FileListener
-
-# Get the logging manager (singleton)
-log_manager = LogManager.get_instance()
-
-# Add formatters and listeners
-log_manager.add_formatter(JSONFormatter())
-log_manager.add_listener(ConsoleListener())
-log_manager.add_listener(FileListener("app.log"))
-
-# Start logging!
-log_manager.info("Application started")
-log_manager.error("Something went wrong", {"error_code": 500})
-```
-
-## 📋 Features
-
-- **Multiple Output Formats**
-  - Text (plain text)
-  - JSON
-  - XML
-  - CSV
-
-- **Various Output Destinations**
-  - Console
-  - Files
-  - Databases (SQLite, MySQL, PostgreSQL, MongoDB)
-  - Cloud Services (Azure, AWS, Google Cloud)
-
-- **Easy Configuration**
-  - Environment variables
-  - JSON configuration files
-  - Programmatic setup
-
-- **Thread-Safe**
-  - Safe for use in multi-threaded applications
-
-## 💡 Examples
-
-### 1. Basic File Logging
-
-```python
-from skyarclog import LogManager
-from skyarclog.formatters import TextFormatter
-from skyarclog.listeners import FileListener
-
-log_manager = LogManager.get_instance()
-log_manager.add_formatter(TextFormatter())
-log_manager.add_listener(FileListener("app.log"))
-
-log_manager.info("User logged in", {"user_id": 123})
-```
-
-### 2. JSON Logging to Console
-
-```python
-from skyarclog import LogManager
-from skyarclog.formatters import JSONFormatter
-from skyarclog.listeners import ConsoleListener
-
-log_manager = LogManager.get_instance()
-log_manager.add_formatter(JSONFormatter())
-log_manager.add_listener(ConsoleListener())
-
-log_manager.debug("Processing request", {
-    "request_id": "abc-123",
-    "method": "GET",
-    "path": "/api/users"
-})
-```
-
-### 3. Database Logging (PostgreSQL)
-
-```python
-from skyarclog import LogManager
-from skyarclog.formatters import JSONFormatter
-from skyarclog.listeners import PostgreSQLListener
-
-log_manager = LogManager.get_instance()
-log_manager.add_formatter(JSONFormatter())
-log_manager.add_listener(PostgreSQLListener(
-    host="localhost",
-    user="myuser",
-    password="mypassword",
-    database="myapp"
-))
-
-log_manager.error("Database connection failed", {
-    "error_code": "DB_001",
-    "retry_count": 3
-})
-```
-
-### 4. Cloud Logging (AWS CloudWatch)
-
-```python
-from skyarclog import LogManager
-from skyarclog.formatters import JSONFormatter
-from skyarclog.listeners import CloudWatchListener
-
-log_manager = LogManager.get_instance()
-log_manager.add_formatter(JSONFormatter())
-log_manager.add_listener(CloudWatchListener(
-    log_group="MyApp",
-    log_stream="Production",
-    region="us-west-2"
-))
-
-log_manager.warning("High CPU usage", {
-    "cpu_percent": 85,
-    "memory_available": "512MB"
-})
-```
-
-## 🔧 Configuration
-
-### Using Environment Variables
+## Installation
 
 ```bash
-# Set log level
-export LOG_LEVEL=DEBUG
-
-# Configure file output
-export LOG_FILE_PATH=/var/log/myapp.log
-
-# Database configuration
-export LOG_DB_HOST=localhost
-export LOG_DB_USER=myuser
-export LOG_DB_PASSWORD=mypassword
+pip install -r requirements.txt
 ```
 
-### Using JSON Configuration
+## Configuration
+
+### Basic Setup
+
+Create a `logging_config.json` file:
 
 ```json
 {
-  "log_level": "INFO",
-  "formatters": ["json"],
-  "listeners": {
-    "console": true,
-    "file": {
-      "path": "app.log",
-      "rotate": true,
-      "max_size": "10MB"
+    "version": 1.0,
+    "key_vault": {
+        "provider": "azure",
+        "vault_url": "${AZURE_KEY_VAULT_URL}"
     },
-    "database": {
-      "type": "postgresql",
-      "host": "localhost",
-      "user": "myuser",
-      "password": "mypassword",
-      "database": "myapp"
+    "listeners": {
+        "mssql": {
+            "enabled": true,
+            "connection_string_secret": "mssql-connection-string"
+        }
     }
-  }
 }
 ```
 
-## 📝 Log Levels
+### Full Configuration Reference
 
-The framework supports standard Python logging levels:
+```json
+{
+    "version": 1.0,
+    "key_vault": {
+        "provider": "azure",
+        "vault_url": "${AZURE_KEY_VAULT_URL}"
+    },
+    "listeners": {
+        "mssql": {
+            "enabled": true,
+            "connection_string_secret": "mssql-connection-string"
+        },
+        "postgresql": {
+            "enabled": true,
+            "connection_string_secret": "postgresql-connection-string"
+        },
+        "mongodb": {
+            "enabled": true,
+            "connection_string_secret": "mongodb-connection-string"
+        },
+        "azure_app_insights": {
+            "enabled": true,
+            "instrumentation_key_secret": "appinsights-instrumentation-key",
+            "enable_local_storage": true,
+            "storage_path": "/tmp/appinsights",
+            "custom_dimensions": {
+                "environment": "${ENVIRONMENT}",
+                "service": "${SERVICE_NAME}"
+            }
+        }
+    },
+    "performance": {
+        "metrics_window_size": 1000,
+        "max_memory_mb": 1024,
+        "max_cpu_percent": 80,
+        "max_disk_write_mbs": 50,
+        "max_network_mbs": 50,
+        "min_workers": 2,
+        "max_workers": 8,
+        "scale_up_threshold": 0.75,
+        "scale_down_threshold": 0.25
+    },
+    "cache": {
+        "memory": {
+            "enabled": true,
+            "max_size_mb": 100,
+            "max_items": 10000,
+            "ttl_seconds": 300
+        },
+        "disk": {
+            "enabled": true,
+            "cache_dir": "${LOG_CACHE_DIR}",
+            "max_size_mb": 1024,
+            "ttl_seconds": 86400
+        }
+    },
+    "security": {
+        "encryption": {
+            "enabled": true,
+            "key_rotation_days": 30
+        }
+    }
+}
+```
 
-- `DEBUG`: Detailed information for debugging
-- `INFO`: General information about program execution
-- `WARNING`: Indicate a potential problem
-- `ERROR`: A more serious problem
-- `CRITICAL`: A critical problem that may prevent the program from running
+### Configuration Sections
 
-## 🔒 Security Best Practices
+1. **Key Vault** (`key_vault`):
+   - `provider`: Cloud provider (azure, aws, google)
+   - `vault_url`: Key vault URL
 
-1. **Never log sensitive information**
-   ```python
-   # ❌ Bad
-   log_manager.info("User login", {"password": "secret123"})
-   
-   # ✅ Good
-   log_manager.info("User login successful", {"user_id": 123})
-   ```
+2. **Listeners** (`listeners`):
+   - Database-specific configurations
+   - Connection string secrets
+   - Custom settings per listener
 
-2. **Use environment variables for credentials**
-   ```python
-   # ❌ Bad
-   listener = PostgreSQLListener(password="mypassword")
-   
-   # ✅ Good
-   import os
-   listener = PostgreSQLListener(password=os.getenv("DB_PASSWORD"))
-   ```
+3. **Performance** (`performance`):
+   - `metrics_window_size`: Size of metrics collection window
+   - `max_memory_mb`: Maximum memory usage
+   - `max_cpu_percent`: Maximum CPU usage
+   - `max_disk_write_mbs`: Maximum disk write speed
+   - `max_network_mbs`: Maximum network usage
+   - Worker pool configuration
 
-3. **Mask sensitive data**
-   ```python
-   # Log with masked credit card
-   log_manager.info("Payment processed", {
-       "card": "****-****-****-1234",
-       "amount": 99.99
-   })
-   ```
+4. **Cache** (`cache`):
+   - Memory cache settings
+   - Disk cache configuration
+   - TTL and size limits
 
-## 🤝 Contributing
+5. **Security** (`security`):
+   - Encryption settings
+   - Key rotation policies
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+## Usage
 
-## 📄 License
+### Basic Logging
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+```python
+from advanced_logging import Logger
 
-## 🆘 Need Help?
+logger = Logger()
 
-- Check our [FAQ](FAQ.md)
-- Open an [Issue](https://github.com/yourusername/skyarclog/issues)
-- Read our [Wiki](https://github.com/yourusername/skyarclog/wiki)
+# Simple logging
+logger.info("User logged in", extra={
+    'user_id': '123',
+    'action': 'login'
+})
 
-## 🌟 Star the Project
+# Structured logging
+logger.log({
+    'level': 'INFO',
+    'message': 'Payment processed',
+    'transaction_id': 'tx_123',
+    'amount': 100.50,
+    'currency': 'USD'
+})
+```
 
-If you find this logging framework useful, please give it a star on GitHub! It helps others discover the project.
+### Performance Monitoring
+
+```python
+from advanced_logging.monitoring import PerformanceMonitor
+
+monitor = PerformanceMonitor()
+
+# Get performance report
+report = monitor.get_performance_report()
+print(report['metrics']['throughput'])
+print(report['recommendations'])
+
+# Check if throttling needed
+if monitor.should_throttle():
+    print("System under heavy load")
+```
+
+### Cache Management
+
+```python
+from advanced_logging.cache import TieredCache
+
+cache = TieredCache()
+
+# Cache operations
+cache.put('key', value)
+cached_value = cache.get('key')
+
+# Get cache stats
+stats = cache.get_stats()
+print(f"Memory cache hits: {stats['memory'].hits}")
+print(f"Disk cache size: {stats['disk'].size_bytes}")
+```
+
+## Environment Variables
+
+Required environment variables:
+- `AZURE_KEY_VAULT_URL`: Azure Key Vault URL
+- `LOG_CACHE_DIR`: Directory for disk cache
+- `ENVIRONMENT`: Environment name
+- `SERVICE_NAME`: Service identifier
+
+Optional environment variables:
+- Cloud provider credentials
+- Custom configuration overrides
+
+## Best Practices
+
+1. **Configuration**:
+   - Use environment variables for sensitive values
+   - Regularly rotate secrets
+   - Monitor resource usage thresholds
+
+2. **Performance**:
+   - Enable caching for frequently accessed data
+   - Monitor performance metrics
+   - Adjust worker counts based on load
+
+3. **Security**:
+   - Use key vault for all secrets
+   - Enable encryption
+   - Implement access controls
+
+4. **Maintenance**:
+   - Regular cache cleanup
+   - Monitor disk usage
+   - Review performance reports
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+MIT License
