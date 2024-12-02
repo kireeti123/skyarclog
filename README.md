@@ -45,8 +45,70 @@ A comprehensive, secure, and high-performance logging framework with centralized
 
 ## Installation
 
+You can install SkyArcLog using pip in several ways:
+
+1. Basic Installation (Core Features):
 ```bash
-pip install -r requirements.txt
+# Install from PyPI
+pip install skyarclog
+
+# Install from GitHub
+pip install git+https://github.com/kireeti123/skyarclog.git
+```
+
+2. Install with Cloud Provider Support:
+```bash
+# Azure Support (App Insights, Key Vault, Blob Storage)
+pip install skyarclog[azure]
+
+# AWS Support (AWS Secrets Manager)
+pip install skyarclog[aws]
+
+# Google Cloud Support (Secret Manager)
+pip install skyarclog[google]
+
+# All Cloud Providers
+pip install skyarclog[all]
+```
+
+3. Development Installation:
+```bash
+# Clone the repository
+git clone https://github.com/kireeti123/skyarclog.git
+cd skyarclog
+
+# Install in editable mode with all dependencies
+pip install -e .[all]
+```
+
+### Prerequisites
+- Python 3.7 or higher
+- For cloud provider features:
+  - Azure: Valid Azure subscription and credentials
+  - AWS: Valid AWS credentials
+  - Google Cloud: Valid GCP credentials
+
+### Environment Variables
+Required environment variables for different cloud providers:
+
+1. Azure:
+```bash
+export AZURE_KEY_VAULT_URL="https://your-vault.vault.azure.net/"
+export AZURE_CLIENT_ID="your-client-id"
+export AZURE_CLIENT_SECRET="your-client-secret"
+export AZURE_TENANT_ID="your-tenant-id"
+```
+
+2. AWS:
+```bash
+export AWS_ACCESS_KEY_ID="your-access-key"
+export AWS_SECRET_ACCESS_KEY="your-secret-key"
+export AWS_REGION="your-region"
+```
+
+3. Google Cloud:
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS="path/to/service-account.json"
 ```
 
 ## Configuration
