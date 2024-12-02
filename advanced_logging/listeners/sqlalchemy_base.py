@@ -50,28 +50,27 @@ class SQLAlchemyBaseListener(BaseListener):
         self._initialize_database(config)
         
     def _get_connection_string(self, config: Dict[str, Any]) -> str:
-        """Get database connection string from config or key vault."""
-        # Check if key vault configuration is provided
-        key_vault_config = config.get('key_vault')
-        if key_vault_config:
-            try:
-                vault_manager = KeyVaultManager(key_vault_config)
-                secret_name = key_vault_config.get('connection_string_secret')
-                if not secret_name:
-                    raise KeyVaultError(
-                        "connection_string_secret not provided in key vault config"
-                    )
-                return vault_manager.get_connection_string(secret_name)
-            except KeyVaultError as e:
-                raise RuntimeError(f"Failed to get connection string from key vault: {str(e)}")
-        
-        # Fall back to direct configuration if no key vault is configured
-        return config['sqlalchemy']['url']
+        """Get database connection string from key vault."""
+        # Get connection string secret name
+        secret_name = config.get('connection_string_secret')
+        if not secret_name:
+            raise RuntimeError("connection_string_secret not provided in config")
+
+        # Get key vault configuration from root config
+        key_vault_config = config.get('key_vault', {})
+        if not key_vault_config:
+            raise RuntimeError("Key vault configuration not found in root config")
+            
+        try:
+            vault_manager = KeyVaultManager(key_vault_config)
+            return vault_manager.get_connection_string(secret_name)
+        except KeyVaultError as e:
+            raise RuntimeError(f"Failed to get connection string from key vault: {str(e)}")
         
     def _initialize_database(self, config: Dict[str, Any]) -> None:
         """Initialize database connection and create table if needed."""
         try:
-            # Get connection string from key vault or config
+            # Get connection string from key vault
             connection_string = self._get_connection_string(config)
             
             # Create engine with connection pooling

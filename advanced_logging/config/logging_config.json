@@ -8,6 +8,10 @@
         "min_workers": 2,
         "max_workers": 8
     },
+    "key_vault": {
+        "provider": "azure",
+        "vault_url": "${AZURE_KEY_VAULT_URL}"
+    },
     "formatters": {
         "json": {
             "class": "advanced_logging.formatters.JSONFormatter",
@@ -36,6 +40,51 @@
             "backup_count": 5,
             "level": "DEBUG"
         },
+        "mssql": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.MSSQLListener",
+            "formatter": "json",
+            "connection_string_secret": "mssql-connection-string",
+            "table": "application_logs",
+            "schema": "dbo",
+            "batch_size": 1000,
+            "level": "INFO",
+            "create_table": true,
+            "indexes": ["timestamp", "level", "logger_name"]
+        },
+        "postgresql": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.PostgreSQLListener",
+            "formatter": "json",
+            "connection_string_secret": "postgresql-connection-string",
+            "table": "application_logs",
+            "schema": "public",
+            "batch_size": 1000,
+            "level": "INFO",
+            "create_table": true,
+            "indexes": ["timestamp", "level", "logger_name"]
+        },
+        "mongodb": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.MongoDBListener",
+            "formatter": "json",
+            "connection_string_secret": "mongodb-connection-string",
+            "database": "logs",
+            "collection": "application_logs",
+            "batch_size": 1000,
+            "level": "INFO"
+        },
+        "cassandra": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.CassandraListener",
+            "formatter": "json",
+            "connection_string_secret": "cassandra-connection-string",
+            "keyspace": "logs",
+            "table": "application_logs",
+            "batch_size": 1000,
+            "level": "INFO",
+            "replication_factor": 3
+        },
         "redis": {
             "enabled": false,
             "class": "advanced_logging.listeners.RedisListener",
@@ -57,59 +106,6 @@
             "flush_interval": 5,
             "level": "INFO",
             "ssl_verify": true
-        },
-        "mssql": {
-            "enabled": false,
-            "class": "advanced_logging.listeners.MSSQLListener",
-            "formatter": "json",
-            "key_vault": {
-                "provider": "azure",
-                "vault_url": "${AZURE_KEY_VAULT_URL}",
-                "connection_string_secret": "mssql-connection-string"
-            },
-            "table": "application_logs",
-            "schema": "dbo",
-            "batch_size": 1000,
-            "level": "INFO",
-            "create_table": true,
-            "indexes": ["timestamp", "level", "logger_name"]
-        },
-        "postgresql": {
-            "enabled": false,
-            "class": "advanced_logging.listeners.PostgreSQLListener",
-            "formatter": "json",
-            "key_vault": {
-                "provider": "aws",
-                "region": "${AWS_REGION}",
-                "connection_string_secret": "postgresql-connection-string"
-            },
-            "table": "application_logs",
-            "schema": "public",
-            "batch_size": 1000,
-            "level": "INFO",
-            "create_table": true,
-            "indexes": ["timestamp", "level", "logger_name"]
-        },
-        "mongodb": {
-            "enabled": false,
-            "class": "advanced_logging.listeners.MongoDBListener",
-            "formatter": "json",
-            "uri": "mongodb://localhost:27017/",
-            "database": "logs",
-            "collection": "application_logs",
-            "batch_size": 1000,
-            "level": "INFO"
-        },
-        "cassandra": {
-            "enabled": false,
-            "class": "advanced_logging.listeners.CassandraListener",
-            "formatter": "json",
-            "contact_points": ["localhost"],
-            "port": 9042,
-            "keyspace": "logs",
-            "table": "application_logs",
-            "batch_size": 1000,
-            "level": "INFO"
         },
         "aws": {
             "enabled": false,
@@ -142,6 +138,25 @@
             "batch_size": 1000,
             "level": "INFO",
             "credentials_path": ""
+        },
+        "azure_app_insights": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.AzureAppInsightsListener",
+            "formatter": "json",
+            "instrumentation_key_secret": "appinsights-instrumentation-key",
+            "enable_local_storage": true,
+            "storage_path": "/tmp/appinsights",
+            "storage_max_size": 52428800,
+            "storage_maintenance_period": 60,
+            "minimum_retry_interval": 1,
+            "maximum_retry_interval": 300,
+            "retry_count": 3,
+            "custom_dimensions": {
+                "environment": "${ENVIRONMENT}",
+                "service": "${SERVICE_NAME}",
+                "version": "${SERVICE_VERSION}"
+            },
+            "level": "INFO"
         }
     },
     "security": {
@@ -174,6 +189,29 @@
         "circuit_breaker": {
             "failure_threshold": 5,
             "reset_timeout": 60
+        },
+        "metrics_window_size": 1000,
+        "max_memory_mb": 1024,
+        "max_cpu_percent": 80,
+        "max_disk_write_mbs": 50,
+        "max_network_mbs": 50,
+        "min_workers": 2,
+        "max_workers": 8,
+        "scale_up_threshold": 0.75,
+        "scale_down_threshold": 0.25
+    },
+    "cache": {
+        "memory": {
+            "enabled": true,
+            "max_size_mb": 100,
+            "max_items": 10000,
+            "ttl_seconds": 300
+        },
+        "disk": {
+            "enabled": true,
+            "cache_dir": "${LOG_CACHE_DIR}",
+            "max_size_mb": 1024,
+            "ttl_seconds": 86400
         }
     },
     "monitoring": {
