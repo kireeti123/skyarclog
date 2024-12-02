@@ -9,7 +9,7 @@ import logging
 # Default logging configuration
 DEFAULT_CONFIG = {
     'version': 1,
-    'disable_existing_loggers': False,
+    'disable_existing_loggers': False,  # Changed to True to disable existing loggers by default
     'formatters': {
         'standard': {
             'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
