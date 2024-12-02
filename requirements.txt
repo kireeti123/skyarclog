@@ -1,14 +1,14 @@
-cryptography>=40.0.0
-elasticsearch>=8.0.0
 redis>=4.5.0
+elasticsearch>=8.0.0
 cassandra-driver>=3.25.0
-pymongo>=4.5.0
-mysql-connector-python>=8.1.0
 sqlalchemy>=2.0.0
 psycopg2-binary>=2.9.0
 pymssql>=2.2.0
+cryptography>=40.0.0
 typing>=3.7.4
 concurrent-log-handler>=0.9.20
+pymongo>=4.5.0
+mysql-connector-python>=8.1.0
 
 # Key Vault Dependencies
 azure-identity>=1.12.0
@@ -20,3 +20,7 @@ google-cloud-secret-manager>=2.16.0
 opencensus-ext-azure>=1.1.9
 opencensus>=0.11.0
 opencensus-ext-logging>=0.1.0
+
+# Azure Blob Storage Dependencies
+azure-storage-blob>=12.16.0
+azure-core>=1.26.0
