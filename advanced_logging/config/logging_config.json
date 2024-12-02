@@ -1,0 +1,196 @@
+{
+    "version": 1.0,
+    "async_worker": {
+        "num_workers": 4,
+        "queue_size": 10000,
+        "batch_size": 1000,
+        "max_wait_time": 0.1,
+        "min_workers": 2,
+        "max_workers": 8
+    },
+    "formatters": {
+        "json": {
+            "class": "advanced_logging.formatters.JSONFormatter",
+            "include_timestamp": true,
+            "include_level": true,
+            "include_logger_name": true
+        },
+        "text": {
+            "class": "advanced_logging.formatters.TextFormatter",
+            "format": "[%(asctime)s] %(levelname)s - %(message)s"
+        }
+    },
+    "listeners": {
+        "console": {
+            "enabled": true,
+            "class": "advanced_logging.listeners.ConsoleListener",
+            "formatter": "text",
+            "level": "INFO"
+        },
+        "file": {
+            "enabled": true,
+            "class": "advanced_logging.listeners.FileListener",
+            "formatter": "json",
+            "filename": "app.log",
+            "max_size": 10485760,
+            "backup_count": 5,
+            "level": "DEBUG"
+        },
+        "redis": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.RedisListener",
+            "formatter": "json",
+            "host": "localhost",
+            "port": 6379,
+            "db": 0,
+            "key": "logs",
+            "max_connections": 10,
+            "level": "INFO"
+        },
+        "elasticsearch": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.ElasticsearchListener",
+            "formatter": "json",
+            "hosts": ["http://localhost:9200"],
+            "index_prefix": "logs",
+            "bulk_size": 500,
+            "flush_interval": 5,
+            "level": "INFO",
+            "ssl_verify": true
+        },
+        "mssql": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.MSSQLListener",
+            "formatter": "json",
+            "key_vault": {
+                "provider": "azure",
+                "vault_url": "${AZURE_KEY_VAULT_URL}",
+                "connection_string_secret": "mssql-connection-string"
+            },
+            "table": "application_logs",
+            "schema": "dbo",
+            "batch_size": 1000,
+            "level": "INFO",
+            "create_table": true,
+            "indexes": ["timestamp", "level", "logger_name"]
+        },
+        "postgresql": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.PostgreSQLListener",
+            "formatter": "json",
+            "key_vault": {
+                "provider": "aws",
+                "region": "${AWS_REGION}",
+                "connection_string_secret": "postgresql-connection-string"
+            },
+            "table": "application_logs",
+            "schema": "public",
+            "batch_size": 1000,
+            "level": "INFO",
+            "create_table": true,
+            "indexes": ["timestamp", "level", "logger_name"]
+        },
+        "mongodb": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.MongoDBListener",
+            "formatter": "json",
+            "uri": "mongodb://localhost:27017/",
+            "database": "logs",
+            "collection": "application_logs",
+            "batch_size": 1000,
+            "level": "INFO"
+        },
+        "cassandra": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.CassandraListener",
+            "formatter": "json",
+            "contact_points": ["localhost"],
+            "port": 9042,
+            "keyspace": "logs",
+            "table": "application_logs",
+            "batch_size": 1000,
+            "level": "INFO"
+        },
+        "aws": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.AWSCloudWatchListener",
+            "formatter": "json",
+            "region": "us-west-2",
+            "log_group": "application-logs",
+            "log_stream": "main",
+            "batch_size": 1000,
+            "level": "INFO",
+            "aws_access_key_id": "",
+            "aws_secret_access_key": ""
+        },
+        "azure": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.AzureLogAnalyticsListener",
+            "formatter": "json",
+            "workspace_id": "",
+            "shared_key": "",
+            "log_type": "ApplicationLogs",
+            "batch_size": 1000,
+            "level": "INFO"
+        },
+        "gcp": {
+            "enabled": false,
+            "class": "advanced_logging.listeners.GCPStackdriverListener",
+            "formatter": "json",
+            "project_id": "",
+            "log_name": "application-logs",
+            "batch_size": 1000,
+            "level": "INFO",
+            "credentials_path": ""
+        }
+    },
+    "security": {
+        "encryption": {
+            "enabled": true,
+            "algorithm": "AES-256-GCM",
+            "key_rotation_interval": 86400,
+            "sensitive_fields": ["password", "token", "api_key", "secret"]
+        },
+        "masking": {
+            "enabled": true,
+            "patterns": {
+                "credit_card": "\\d{4}-\\d{4}-\\d{4}-\\d{4}",
+                "ssn": "\\d{3}-\\d{2}-\\d{4}",
+                "email": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
+            },
+            "mask_char": "*"
+        },
+        "audit": {
+            "enabled": true,
+            "include_user": true,
+            "include_ip": true,
+            "include_request_id": true
+        }
+    },
+    "performance": {
+        "buffer_size": 10000,
+        "flush_interval": 5,
+        "max_batch_size": 1000,
+        "circuit_breaker": {
+            "failure_threshold": 5,
+            "reset_timeout": 60
+        }
+    },
+    "monitoring": {
+        "metrics": {
+            "enabled": true,
+            "include_system_metrics": true,
+            "collection_interval": 60
+        },
+        "health_check": {
+            "enabled": true,
+            "interval": 300,
+            "timeout": 30
+        },
+        "alerts": {
+            "enabled": true,
+            "error_threshold": 100,
+            "latency_threshold": 1000
+        }
+    }
+}
