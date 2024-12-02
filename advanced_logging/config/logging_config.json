@@ -29,7 +29,20 @@
             "enabled": true,
             "class": "advanced_logging.listeners.ConsoleListener",
             "formatter": "text",
-            "level": "INFO"
+            "level": "INFO",
+            "colors": {
+                "enabled": true,
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bold"
+            },
+            "format": "{timestamp} [{level}] {message}",
+            "show_source": true,
+            "show_thread": true,
+            "show_process": false,
+            "timestamp_format": "%Y-%m-%d %H:%M:%S"
         },
         "file": {
             "enabled": true,

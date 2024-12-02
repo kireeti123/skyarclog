@@ -123,6 +123,41 @@ This document provides a comprehensive guide to configuring the SkyArcLog framew
 | `compression.min_size_mb` | ❌ | number | Minimum size for compression |
 | `metadata` | ❌ | object | Custom metadata for blobs |
 
+#### Console Listener
+```json
+{
+    "console": {
+        "enabled": true,
+        "format": "{timestamp} [{level}] {message}",
+        "colors": {
+            "enabled": true,
+            "DEBUG": "cyan",
+            "INFO": "green",
+            "WARNING": "yellow",
+            "ERROR": "red",
+            "CRITICAL": "red,bold"
+        },
+        "level": "INFO",
+        "show_source": true,
+        "show_thread": true,
+        "show_process": false,
+        "timestamp_format": "%Y-%m-%d %H:%M:%S"
+    }
+}
+```
+
+| Field | Required | Type | Description |
+|-------|----------|------|-------------|
+| `enabled` | ✅ | boolean | Enable/disable console logging |
+| `format` | ❌ | string | Log message format template (default: "{timestamp} [{level}] {message}") |
+| `colors.enabled` | ❌ | boolean | Enable colored output (default: true) |
+| `colors.[LEVEL]` | ❌ | string | Color for each log level (supports "red", "green", "yellow", "blue", "magenta", "cyan", "white", "bold") |
+| `level` | ❌ | string | Minimum log level (default: "INFO") |
+| `show_source` | ❌ | boolean | Show source file and line (default: true) |
+| `show_thread` | ❌ | boolean | Show thread name/id (default: true) |
+| `show_process` | ❌ | boolean | Show process id (default: false) |
+| `timestamp_format` | ❌ | string | Timestamp format string (default: "%Y-%m-%d %H:%M:%S") |
+
 ### Performance Configuration
 ```json
 {
