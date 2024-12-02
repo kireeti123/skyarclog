@@ -157,6 +157,26 @@
                 "version": "${SERVICE_VERSION}"
             },
             "level": "INFO"
+        },
+        "azure_blob": {
+            "enabled": true,
+            "connection_string_secret": "blob-storage-connection-string",
+            "container_name": "application-logs",
+            "folder_structure": "{year}/{month}/{day}",
+            "file_prefix": "app_log",
+            "file_extension": ".json",
+            "max_file_size_mb": 100,
+            "retention_days": 90,
+            "compression": {
+                "enabled": true,
+                "type": "gzip",
+                "min_size_mb": 10
+            },
+            "metadata": {
+                "environment": "${ENVIRONMENT}",
+                "service": "${SERVICE_NAME}",
+                "version": "${SERVICE_VERSION}"
+            }
         }
     },
     "security": {
