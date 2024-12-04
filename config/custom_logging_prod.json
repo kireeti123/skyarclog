@@ -1,0 +1,45 @@
+{
+    "application": {
+        "name": "your-app-prod",
+        "version": "1.0.0",
+        "environment": "production"
+    },
+    "log_level": "INFO",
+    "formatters": ["json"],
+    "security": {
+        "encryption": {
+            "enabled": true,
+            "type": "aes-gcm",
+            "key_rotation_interval": "1d"
+        },
+        "signatures": {
+            "enabled": true,
+            "key_rotation_interval": "7d"
+        },
+        "validation": {
+            "enabled": true,
+            "chain_size": 1000,
+            "export_interval": "30m",
+            "export_path": "/var/log/your-app/chain.json"
+        }
+    },
+    "listeners": {
+        "console": {
+            "enabled": false,
+            "format": "json"
+        },
+        "file": {
+            "enabled": true,
+            "path": "/var/log/your-app/app.log",
+            "max_size": "500MB",
+            "backup_count": 10
+        },
+        "elasticsearch": {
+            "enabled": true,
+            "hosts": ["http://elasticsearch:9200"],
+            "index_prefix": "logs-prod-",
+            "batch_size": 1000,
+            "flush_interval": 5.0
+        }
+    }
+}

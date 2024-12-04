@@ -7,6 +7,45 @@ import json
 from typing import Any, Dict, Optional
 from datetime import timedelta
 
+# Default configuration
+default_config = {
+    "application": {
+        "name": "skyarclog-app",  # Default application name
+        "version": "1.0.0"
+    },
+    "log_level": "INFO",
+    "formatters": ["json"],
+    "security": {
+        "encryption": {
+            "enabled": True,
+            "type": "aes-gcm",
+            "key_rotation_interval": "7d"
+        },
+        "signatures": {
+            "enabled": True,
+            "key_rotation_interval": "30d"
+        },
+        "validation": {
+            "enabled": True,
+            "chain_size": 100,
+            "export_interval": "1h",
+            "export_path": "logs/chain.json"
+        }
+    },
+    "listeners": {
+        "console": {
+            "enabled": True,
+            "format": "json"
+        },
+        "file": {
+            "enabled": False,
+            "path": "logs/app.log",
+            "max_size": "100MB",
+            "backup_count": 5
+        }
+    }
+}
+
 class LoggingConfig:
     """Configuration management for logging framework."""
     
@@ -17,28 +56,7 @@ class LoggingConfig:
         Args:
             config_file: Optional path to JSON configuration file.
         """
-        self.config = {
-            "log_level": "INFO",
-            "formatters": ["json"],
-            "security": {
-                "encryption": {
-                    "enabled": True,
-                    "type": "aes-gcm",
-                    "key_rotation_interval": "7d"
-                },
-                "signatures": {
-                    "enabled": True,
-                    "key_rotation_interval": "30d"
-                },
-                "validation": {
-                    "enabled": True,
-                    "chain_size": 100,
-                    "export_interval": "1h",
-                    "export_path": "logs/chain.json"
-                }
-            },
-            "listeners": {}
-        }
+        self.config = default_config.copy()
         
         if config_file:
             self.load_config(config_file)

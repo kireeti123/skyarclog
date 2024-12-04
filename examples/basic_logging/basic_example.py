@@ -1,20 +1,21 @@
 """
-Basic logging example using skyarclog.
+Basic logging example using skyarclog with simplified setup.
 """
 
-import logging
 from skyarclog import setup_logging
-from skyarclog.config import default_config
 
 def main():
-    # Setup logging with default configuration
-    logger = setup_logging()
+    # Setup logging with environment
+    logger = setup_logging("dev")
     
-    # Get a logger for this module
-    log = logging.getLogger(__name__)
+    # Get logger instance (automatically uses application name from config)
+    log = logger.get_logger()
     
     # Log different levels with context
-    log.info("Application started", extra={"version": "1.0.0"})
+    log.info("Application started", extra={
+        "version": logger.config["application"]["version"],
+        "environment": logger.config["application"].get("environment", "default")
+    })
     log.debug("Debug message", extra={"detail": "Extra debug info"})
     log.warning("Warning message", extra={"warning_code": "W001"})
     log.error("Error occurred", extra={

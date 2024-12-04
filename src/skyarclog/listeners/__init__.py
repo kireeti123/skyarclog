@@ -8,10 +8,21 @@ from .file import FileListener
 from .sqlite import SQLiteListener
 from .mysql import MySQLListener
 from .postgresql import PostgreSQLListener
-from .mongodb import MongoDBListener
-from .redis import RedisListener
-from .elasticsearch import ElasticsearchListener
-from .cassandra import CassandraListener
+from .mssql import MSSQLListener
+from .azure import AzureListener
+from .azure_blob import AzureBlobListener
+
+# Map of listener names to their classes
+AVAILABLE_LISTENERS = {
+    'console': ConsoleListener,
+    'file': FileListener,
+    'sqlite': SQLiteListener,
+    'mysql': MySQLListener,
+    'postgresql': PostgreSQLListener,
+    'mssql': MSSQLListener,
+    'azure': AzureListener,
+    'azure_blob': AzureBlobListener,
+}
 
 __all__ = [
     'BaseListener',
@@ -20,8 +31,8 @@ __all__ = [
     'SQLiteListener',
     'MySQLListener',
     'PostgreSQLListener',
-    'MongoDBListener',
-    'RedisListener',
-    'ElasticsearchListener',
-    'CassandraListener'
+    'MSSQLListener',
+    'AzureListener',
+    'AzureBlobListener',
+    'AVAILABLE_LISTENERS'
 ]

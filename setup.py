@@ -10,15 +10,11 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 # Base requirements
 base_requirements = [
-    "redis>=4.5.0",
-    "elasticsearch>=8.0.0",
-    "cassandra-driver>=3.25.0",
     "sqlalchemy>=2.0.0",
     "psycopg2-binary>=2.9.0",
     "cryptography>=40.0.0",
     "typing>=3.7.4",
     "concurrent-log-handler>=0.9.20",
-    "pymongo>=4.5.0",
     "PyMySQL>=1.1.0",
     "DBUtils>=3.0.3",
 ]
@@ -33,12 +29,6 @@ extras_require = {
         'opencensus-ext-azure>=1.1.9',
         'opencensus>=0.11.0',
         'opencensus-ext-logging>=0.1.0',
-    ],
-    'aws': [
-        'boto3>=1.26.0'
-    ],
-    'google': [
-        'google-cloud-secret-manager>=2.16.0'
     ],
     'mssql': [
         'pymssql>=2.2.0'  # Optional SQL Server support
