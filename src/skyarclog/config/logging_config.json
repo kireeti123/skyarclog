@@ -1,267 +1,58 @@
 {
     "version": 1.0,
-    "async_worker": {
-        "num_workers": 4,
-        "queue_size": 10000,
-        "batch_size": 1000,
-        "max_wait_time": 0.1,
-        "min_workers": 2,
-        "max_workers": 8
-    },
-    "key_vault": {
-        "provider": "azure",
-        "vault_url": "${AZURE_KEY_VAULT_URL}"
-    },
-    "formatters": {
-        "json": {
-            "class": "skyarclog.formatters.JSONFormatter",
-            "include_timestamp": true,
-            "include_level": true,
-            "include_logger_name": true
-        },
-        "text": {
-            "class": "skyarclog.formatters.TextFormatter",
-            "format": "[%(asctime)s] %(levelname)s - %(message)s"
-        }
-    },
+    "name": "SkyArcLog Default",
     "listeners": {
         "console": {
             "enabled": true,
-            "class": "skyarclog.listeners.ConsoleListener",
-            "formatter": "text",
-            "level": "INFO",
-            "colors": {
-                "enabled": true,
-                "DEBUG": "cyan",
-                "INFO": "green",
-                "WARNING": "yellow",
-                "ERROR": "red",
-                "CRITICAL": "red,bold"
-            },
-            "format": "{timestamp} [{level}] {message}",
-            "show_source": true,
-            "show_thread": true,
-            "show_process": false,
-            "timestamp_format": "%Y-%m-%d %H:%M:%S"
+            "format": "json"
         },
         "file": {
-            "enabled": true,
-            "class": "skyarclog.listeners.FileListener",
-            "formatter": "json",
-            "filename": "app.log",
-            "max_size": 10485760,
-            "backup_count": 5,
-            "level": "DEBUG"
+            "path": "logs/app.log",
+            "max_size": "100MB",
+            "backup_count": 5
         },
-        "mssql": {
-            "enabled": false,
-            "class": "skyarclog.listeners.MSSQLListener",
-            "formatter": "json",
-            "connection_string_secret": "mssql-connection-string",
-            "table": "application_logs",
-            "schema": "dbo",
-            "batch_size": 1000,
-            "level": "INFO",
-            "create_table": true,
-            "indexes": ["timestamp", "level", "logger_name"]
+        "azure-appinsights": {
+            "format": "json",
+            "instrumentation_key": "${AZURE_INSTRUMENTATION_KEY}"
         },
-        "postgresql": {
-            "enabled": false,
-            "class": "skyarclog.listeners.PostgreSQLListener",
-            "formatter": "json",
-            "connection_string_secret": "postgresql-connection-string",
-            "table": "application_logs",
-            "schema": "public",
-            "batch_size": 1000,
-            "level": "INFO",
-            "create_table": true,
-            "indexes": ["timestamp", "level", "logger_name"]
+        "azure-blob": {
+            "format": "json",
+            "container_connection_string": "${AZURE_BLOB_CONNECTION_STRING}"
         },
-        "mongodb": {
-            "enabled": false,
-            "class": "skyarclog.listeners.MongoDBListener",
-            "formatter": "json",
-            "connection_string_secret": "mongodb-connection-string",
-            "database": "logs",
-            "collection": "application_logs",
-            "batch_size": 1000,
-            "level": "INFO"
+        "ms-sql": {
+            "format": "json",
+            "connection_string": "${AZURE_SQL_CONNECTION_STRING}"
+        }
+    },
+    "loggers": {
+        "root": {
+            "level": ["INFO"],
+            "handlers": ["console", "file"]
         },
-        "cassandra": {
-            "enabled": false,
-            "class": "skyarclog.listeners.CassandraListener",
-            "formatter": "json",
-            "connection_string_secret": "cassandra-connection-string",
-            "keyspace": "logs",
-            "table": "application_logs",
-            "batch_size": 1000,
-            "level": "INFO",
-            "replication_factor": 3
+        "informational": {
+            "level": ["DEBUG"],
+            "handlers": ["console", "file", "azure-blob"]
         },
-        "redis": {
-            "enabled": false,
-            "class": "skyarclog.listeners.RedisListener",
-            "formatter": "json",
-            "host": "localhost",
-            "port": 6379,
-            "db": 0,
-            "key": "logs",
-            "max_connections": 10,
-            "level": "INFO"
-        },
-        "elasticsearch": {
-            "enabled": false,
-            "class": "skyarclog.listeners.ElasticsearchListener",
-            "formatter": "json",
-            "hosts": ["http://localhost:9200"],
-            "index_prefix": "logs",
-            "bulk_size": 500,
-            "flush_interval": 5,
-            "level": "INFO",
-            "ssl_verify": true
-        },
-        "aws": {
-            "enabled": false,
-            "class": "skyarclog.listeners.AWSCloudWatchListener",
-            "formatter": "json",
-            "region": "us-west-2",
-            "log_group": "application-logs",
-            "log_stream": "main",
-            "batch_size": 1000,
-            "level": "INFO",
-            "aws_access_key_id": "",
-            "aws_secret_access_key": ""
-        },
-        "azure": {
-            "enabled": false,
-            "class": "skyarclog.listeners.AzureLogAnalyticsListener",
-            "formatter": "json",
-            "workspace_id": "",
-            "shared_key": "",
-            "log_type": "ApplicationLogs",
-            "batch_size": 1000,
-            "level": "INFO"
-        },
-        "gcp": {
-            "enabled": false,
-            "class": "skyarclog.listeners.GCPStackdriverListener",
-            "formatter": "json",
-            "project_id": "",
-            "log_name": "application-logs",
-            "batch_size": 1000,
-            "level": "INFO",
-            "credentials_path": ""
-        },
-        "azure_app_insights": {
-            "enabled": false,
-            "class": "skyarclog.listeners.AzureAppInsightsListener",
-            "formatter": "json",
-            "instrumentation_key_secret": "appinsights-instrumentation-key",
-            "enable_local_storage": true,
-            "storage_path": "/tmp/appinsights",
-            "storage_max_size": 52428800,
-            "storage_maintenance_period": 60,
-            "minimum_retry_interval": 1,
-            "maximum_retry_interval": 300,
-            "retry_count": 3,
-            "custom_dimensions": {
-                "environment": "${ENVIRONMENT}",
-                "service": "${SERVICE_NAME}",
-                "version": "${SERVICE_VERSION}"
-            },
-            "level": "INFO"
-        },
-        "azure_blob": {
-            "enabled": true,
-            "connection_string_secret": "blob-storage-connection-string",
-            "container_name": "application-logs",
-            "folder_structure": "{year}/{month}/{day}",
-            "file_prefix": "app_log",
-            "file_extension": ".json",
-            "max_file_size_mb": 100,
-            "retention_days": 90,
-            "compression": {
-                "enabled": true,
-                "type": "gzip",
-                "min_size_mb": 10
-            },
-            "metadata": {
-                "environment": "${ENVIRONMENT}",
-                "service": "${SERVICE_NAME}",
-                "version": "${SERVICE_VERSION}"
-            }
+        "critical": {
+            "level": ["ERROR", "CRITICAL"],
+            "handlers": ["azure-blob", "azure-appinsights", "ms-sql"]
         }
     },
     "security": {
         "encryption": {
             "enabled": true,
-            "algorithm": "AES-256-GCM",
-            "key_rotation_interval": 86400,
-            "sensitive_fields": ["password", "token", "api_key", "secret"]
+            "type": "aes-gcm",
+            "key_rotation_interval": "1d"
         },
-        "masking": {
+        "signatures": {
             "enabled": true,
-            "patterns": {
-                "credit_card": "\\d{4}-\\d{4}-\\d{4}-\\d{4}",
-                "ssn": "\\d{3}-\\d{2}-\\d{4}",
-                "email": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
-            },
-            "mask_char": "*"
+            "key_rotation_interval": "7d"
         },
-        "audit": {
+        "validation": {
             "enabled": true,
-            "include_user": true,
-            "include_ip": true,
-            "include_request_id": true
-        }
-    },
-    "performance": {
-        "buffer_size": 10000,
-        "flush_interval": 5,
-        "max_batch_size": 1000,
-        "circuit_breaker": {
-            "failure_threshold": 5,
-            "reset_timeout": 60
-        },
-        "metrics_window_size": 1000,
-        "max_memory_mb": 1024,
-        "max_cpu_percent": 80,
-        "max_disk_write_mbs": 50,
-        "max_network_mbs": 50,
-        "min_workers": 2,
-        "max_workers": 8,
-        "scale_up_threshold": 0.75,
-        "scale_down_threshold": 0.25
-    },
-    "cache": {
-        "memory": {
-            "enabled": true,
-            "max_size_mb": 100,
-            "max_items": 10000,
-            "ttl_seconds": 300
-        },
-        "disk": {
-            "enabled": true,
-            "cache_dir": "${LOG_CACHE_DIR}",
-            "max_size_mb": 1024,
-            "ttl_seconds": 86400
-        }
-    },
-    "monitoring": {
-        "metrics": {
-            "enabled": true,
-            "include_system_metrics": true,
-            "collection_interval": 60
-        },
-        "health_check": {
-            "enabled": true,
-            "interval": 300,
-            "timeout": 30
-        },
-        "alerts": {
-            "enabled": true,
-            "error_threshold": 100,
-            "latency_threshold": 1000
+            "chain_size": 1000,
+            "export_interval": "30m",
+            "export_path": "logs/chain.json"
         }
     }
 }

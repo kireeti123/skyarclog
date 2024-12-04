@@ -1,11 +1,43 @@
 {
-    "application": {
-        "name": "your-app-prod",
-        "version": "1.0.0",
-        "environment": "production"
+    "version": 1.0,
+    "name": "Production App",
+    "listeners": {
+        "console": {
+            "enabled": true,
+            "format": "json"
+        },
+        "file": {
+            "path": "/var/log/skyarclog/app.log",
+            "max_size": "500MB",
+            "backup_count": 10
+        },
+        "azure-appinsights": {
+            "format": "json",
+            "instrumentation_key": "${AZURE_INSTRUMENTATION_KEY}"
+        },
+        "azure-blob": {
+            "format": "json",
+            "container_connection_string": "${AZURE_BLOB_CONNECTION_STRING}"
+        },
+        "ms-sql": {
+            "format": "json",
+            "connection_string": "${AZURE_SQL_CONNECTION_STRING}"
+        }
     },
-    "log_level": "INFO",
-    "formatters": ["json"],
+    "loggers": {
+        "root": {
+            "level": ["INFO"],
+            "handlers": ["console", "azure-blob"]
+        },
+        "informational": {
+            "level": ["DEBUG"],
+            "handlers": ["console", "azure-blob"]
+        },
+        "critical": {
+            "level": ["ERROR", "CRITICAL"],
+            "handlers": ["azure-blob", "azure-appinsights"]
+        }
+    },
     "security": {
         "encryption": {
             "enabled": true,
@@ -20,26 +52,7 @@
             "enabled": true,
             "chain_size": 1000,
             "export_interval": "30m",
-            "export_path": "/var/log/your-app/chain.json"
-        }
-    },
-    "listeners": {
-        "console": {
-            "enabled": false,
-            "format": "json"
-        },
-        "file": {
-            "enabled": true,
-            "path": "/var/log/your-app/app.log",
-            "max_size": "500MB",
-            "backup_count": 10
-        },
-        "elasticsearch": {
-            "enabled": true,
-            "hosts": ["http://elasticsearch:9200"],
-            "index_prefix": "logs-prod-",
-            "batch_size": 1000,
-            "flush_interval": 5.0
+            "export_path": "/var/log/skyarclog/chain.json"
         }
     }
 }
