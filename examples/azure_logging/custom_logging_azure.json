@@ -1,0 +1,52 @@
+{
+    "application": {
+        "name": "azure-example-app",
+        "version": "1.0.0",
+        "environment": "azure"
+    },
+    "log_level": "INFO",
+    "formatters": ["json"],
+    "security": {
+        "encryption": {
+            "enabled": true,
+            "type": "aes-gcm",
+            "key_rotation_interval": "1d"
+        },
+        "signatures": {
+            "enabled": true,
+            "key_rotation_interval": "7d"
+        },
+        "validation": {
+            "enabled": true,
+            "chain_size": 1000,
+            "export_interval": "30m",
+            "export_path": "logs/chain.json"
+        }
+    },
+    "listeners": {
+        "console": {
+            "enabled": true,
+            "format": "json"
+        },
+        "file": {
+            "enabled": true,
+            "path": "logs/azure-app.log",
+            "max_size": "100MB",
+            "backup_count": 5
+        },
+        "azure": {
+            "enabled": true,
+            "connection_string": "${AZURE_CONNECTION_STRING}",
+            "instrumentation_key": "${AZURE_INSTRUMENTATION_KEY}",
+            "application_insights": true
+        },
+        "azure_blob": {
+            "enabled": true,
+            "connection_string": "${AZURE_BLOB_CONNECTION_STRING}",
+            "container_name": "logs",
+            "blob_prefix": "app-logs/",
+            "batch_size": 100,
+            "flush_interval": 5.0
+        }
+    }
+}
