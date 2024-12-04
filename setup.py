@@ -2,25 +2,55 @@
 Setup configuration for skyarclog package.
 """
 
-import os
-import json
-import shutil
 from setuptools import setup, find_packages
-from setuptools.command.install import install
 
 # Read long description from README
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-# Read requirements
-with open("requirements.txt", "r", encoding="utf-8") as fh:
-    requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
+# Base requirements
+base_requirements = [
+    "redis>=4.5.0",
+    "elasticsearch>=8.0.0",
+    "cassandra-driver>=3.25.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
+    "cryptography>=40.0.0",
+    "typing>=3.7.4",
+    "concurrent-log-handler>=0.9.20",
+    "pymongo>=4.5.0",
+    "PyMySQL>=1.1.0",
+    "DBUtils>=3.0.3",
+]
 
-class PostInstallCommand(install):
-    """Post-installation for installation mode."""
-    def run(self):
-        install.run(self)
-        print("skyarclog package installed successfully!")
+# Optional dependencies
+extras_require = {
+    'azure': [
+        'azure-identity>=1.12.0',
+        'azure-keyvault-secrets>=4.7.0',
+        'azure-storage-blob>=12.16.0',
+        'azure-core>=1.26.0',
+        'opencensus-ext-azure>=1.1.9',
+        'opencensus>=0.11.0',
+        'opencensus-ext-logging>=0.1.0',
+    ],
+    'aws': [
+        'boto3>=1.26.0'
+    ],
+    'google': [
+        'google-cloud-secret-manager>=2.16.0'
+    ],
+    'mssql': [
+        'pymssql>=2.2.0'  # Optional SQL Server support
+    ]
+}
+
+# Add 'all' option that includes all extras
+extras_require['all'] = [
+    package
+    for extra in extras_require.values()
+    for package in extra
+]
 
 setup(
     name="skyarclog",
@@ -31,10 +61,18 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/kireeti123/skyarclog",
+    project_urls={
+        "Bug Tracker": "https://github.com/kireeti123/skyarclog/issues",
+        "Documentation": "https://github.com/kireeti123/skyarclog#readme",
+        "Source Code": "https://github.com/kireeti123/skyarclog",
+    },
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     package_data={
-        '': ['config/*.json', 'config/*.md'],
+        'skyarclog': [
+            'config/*.json',
+            'config/*.md',
+        ],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -49,30 +87,11 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.7",
-    install_requires=requirements,
-    cmdclass={
-        'install': PostInstallCommand,
+    install_requires=base_requirements,
+    extras_require=extras_require,
+    entry_points={
+        'console_scripts': [
+            'skyarclog=skyarclog.cli:main',
+        ],
     },
-    extras_require={
-        'azure': [
-            'azure-identity>=1.12.0',
-            'azure-keyvault-secrets>=4.7.0',
-            'azure-storage-blob>=12.16.0',
-            'opencensus-ext-azure>=1.1.9',
-        ],
-        'aws': [
-            'boto3>=1.26.0'
-        ],
-        'google': [
-            'google-cloud-secret-manager>=2.16.0'
-        ],
-        'all': [
-            'azure-identity>=1.12.0',
-            'azure-keyvault-secrets>=4.7.0',
-            'azure-storage-blob>=12.16.0',
-            'opencensus-ext-azure>=1.1.9',
-            'boto3>=1.26.0',
-            'google-cloud-secret-manager>=2.16.0'
-        ]
-    }
 )
