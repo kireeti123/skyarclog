@@ -11,9 +11,13 @@ from logging.handlers import MemoryHandler, QueueHandler, QueueListener
 
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
-from azure.monitor.opentelemetry.exporter import AzureMonitorTraceExporter
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opencensus.ext.azure.log_exporter import AzureLogHandler
+from opencensus.ext.azure import metrics_exporter
+from opencensus.stats import aggregation as aggregation_module
+from opencensus.stats import measure as measure_module
+from opencensus.stats import stats as stats_module
+from opencensus.stats import view as view_module
+from opencensus.tags import tag_map as tag_map_module
 from pythonjsonlogger import jsonlogger
 import pyodbc
 from config_manager import ConfigurationManager
@@ -167,39 +171,58 @@ class SkyArcLogger:
         return handler
 
     def _create_appinsights_handler(self, config: dict) -> logging.Handler:
-        """Create an Azure Application Insights logging handler."""
-        # Get connection string from Key Vault if it's a reference
-        connection_string = (
-            self.config_manager.get_secret(config['connection_string'][4:-1])
-            if config['connection_string'].startswith('${kv:')
-            else config['connection_string']
+        """Create an Azure Application Insights handler using OpenCensus."""
+        # Get instrumentation key from Key Vault if it's a reference
+        instrumentation_key = (
+            self.config_manager.get_secret(config['instrumentation_key'][4:-1])
+            if config['instrumentation_key'].startswith('${kv:')
+            else config['instrumentation_key']
         )
+        
+        # Create custom dimensions processor
+        def dimensions_processor(envelope):
+            """Process custom dimensions for each log entry."""
+            custom_dimensions = config.get('custom_dimensions', {})
+            envelope.tags.update({
+                k: (
+                    self.config_manager.get_secret(v[4:-1])
+                    if isinstance(v, str) and v.startswith('${kv:') and v.endswith('}')
+                    else v
+                )
+                for k, v in custom_dimensions.items()
+            })
+            return True
 
-        tracer_provider = TracerProvider()
-        azure_exporter = AzureMonitorTraceExporter(connection_string=connection_string)
-        span_processor = BatchSpanProcessor(azure_exporter)
-        tracer_provider.add_span_processor(span_processor)
-
-        class AppInsightsHandler(logging.Handler):
-            def __init__(self, exporter):
-                super().__init__()
-                self.exporter = exporter
-
-            def emit(self, record):
-                try:
-                    msg = self.format(record)
-                    self.exporter.export([{
-                        'name': record.name,
-                        'message': msg,
-                        'severity': record.levelname,
-                        'time': datetime.utcnow().isoformat()
-                    }])
-                except Exception:
-                    self.handleError(record)
-
-        handler = AppInsightsHandler(azure_exporter)
-        formatter = jsonlogger.JsonFormatter()
+        # Initialize Azure Log Handler
+        handler = AzureLogHandler(
+            instrumentation_key=instrumentation_key,
+            enable_local_storage=config.get('enable_local_storage', True),
+            buffer_size=config.get('buffer', {}).get('max_size', 1000),
+            queue_capacity=config.get('buffer', {}).get('queue_size', 5000)
+        )
+        
+        # Add custom processor for dimensions
+        handler.add_telemetry_processor(dimensions_processor)
+        
+        # Configure sampling if enabled
+        sampling_config = config.get('sampling', {})
+        if sampling_config.get('enabled', False):
+            handler.setSamplingRate(sampling_config.get('rate', 1.0))
+            
+            # Apply sampling rules if specified
+            if 'rules' in sampling_config:
+                for rule in sampling_config['rules']:
+                    if 'includes' in rule and 'rate' in rule:
+                        for level in rule['includes']:
+                            handler.addSamplingRule(level, rule['rate'])
+        
+        # Set formatter
+        formatter = jsonlogger.JsonFormatter(
+            fmt='%(asctime)s %(levelname)s %(name)s %(message)s',
+            datefmt=config.get('timestamp_format', '%Y-%m-%d %H:%M:%S.%f')
+        )
         handler.setFormatter(formatter)
+        
         return handler
 
     def _create_sql_handler(self, config: dict) -> logging.Handler:
