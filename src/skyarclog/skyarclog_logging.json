@@ -1,0 +1,233 @@
+{
+    "version": 1.0,
+    "name": "Client App 1",
+    "listeners": {
+        "console": {
+            "enabled": true,
+            "format": "json",
+            "colors": {
+                "enabled": true,
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bold"
+            },
+            "output": "stdout",
+            "show_timestamp": true,
+            "timestamp_format": "%Y-%m-%d %H:%M:%S.%f",
+            "show_level": true,
+            "show_thread": true,
+            "show_process": true
+        },
+        "file": {
+            "enabled": true,
+            "format": "json",
+            "path": "/var/log/skyarclog/app.log",
+            "max_size": "500MB",
+            "backup_count": 10,
+            "encoding": "utf-8",
+            "mode": "a",
+            "compression": {
+                "enabled": true,
+                "algorithm": "gzip",
+                "min_size": "10MB"
+            },
+            "rotation": {
+                "when": "midnight",
+                "interval": 1,
+                "utc": true
+            },
+            "permissions": {
+                "file_mode": "0644",
+                "dir_mode": "0755"
+            }
+        },
+        "azure-appinsights": {
+            "enabled": true,
+            "format": "json",
+            "instrumentation_key": "${AZURE_INSTRUMENTATION_KEY}",
+            "connection_string": "${AZURE_APPINSIGHTS_CONNECTION_STRING}",
+            "custom_dimensions": {
+                "environment": "${ENV}",
+                "service": "${SERVICE_NAME}",
+                "version": "${APP_VERSION}"
+            },
+            "buffer": {
+                "enabled": true,
+                "max_size": 1000,
+                "flush_interval": 30,
+                "batch_size": 100
+            },
+            "retry": {
+                "max_retries": 3,
+                "initial_delay": 1,
+                "max_delay": 60,
+                "exponential_base": 2
+            },
+            "sampling": {
+                "enabled": true,
+                "rate": 1.0,
+                "rules": [
+                    {
+                        "name": "errors",
+                        "includes": ["ERROR", "CRITICAL"],
+                        "rate": 1.0
+                    },
+                    {
+                        "name": "debug",
+                        "includes": ["DEBUG"],
+                        "rate": 0.1
+                    }
+                ]
+            }
+        },
+        "azure-blob": {
+            "enabled": true,
+            "format": "json",
+            "container_connection_string": "${AZURE_BLOB_CONNECTION_STRING}",
+            "container_name": "${BLOB_CONTAINER_NAME}",
+            "folder_structure": "{year}/{month}/{day}/{hour}",
+            "file_prefix": "app_log",
+            "file_extension": ".json",
+            "compression": {
+                "enabled": true,
+                "algorithm": "gzip",
+                "min_size": "10MB"
+            },
+            "buffer": {
+                "enabled": true,
+                "max_size": 1000,
+                "flush_interval": 60,
+                "batch_size": 100
+            },
+            "retry": {
+                "max_retries": 3,
+                "initial_delay": 1,
+                "max_delay": 60,
+                "exponential_base": 2
+            },
+            "lifecycle": {
+                "enabled": true,
+                "retention_days": 90,
+                "archive_tier": "Cool",
+                "delete_after_days": 365
+            }
+        },
+        "ms-sql": {
+            "enabled": true,
+            "format": "json",
+            "connection_string": "${AZURE_SQL_CONNECTION_STRING}",
+            "table_name": "ApplicationLogs",
+            "schema_name": "dbo",
+            "buffer": {
+                "enabled": true,
+                "max_size": 1000,
+                "flush_interval": 30,
+                "batch_size": 100
+            },
+            "retry": {
+                "max_retries": 3,
+                "initial_delay": 1,
+                "max_delay": 60,
+                "exponential_base": 2
+            },
+            "indexes": [
+                {
+                    "name": "IX_Timestamp",
+                    "columns": ["Timestamp"],
+                    "include": ["Level", "Logger"]
+                },
+                {
+                    "name": "IX_Level",
+                    "columns": ["Level"],
+                    "include": ["Timestamp", "Message"]
+                }
+            ],
+            "partitioning": {
+                "enabled": true,
+                "column": "Timestamp",
+                "interval": "MONTH"
+            },
+            "cleanup": {
+                "enabled": true,
+                "retention_days": 90,
+                "batch_size": 1000,
+                "schedule": "0 0 * * *"
+            }
+        },
+        "memory": {
+            "enabled": true,
+            "capacity": 1000,
+            "flush_level": "ERROR",
+            "target_handlers": ["azure-blob", "ms-sql"],
+            "flush_on_capacity": true,
+            "flush_interval": 60
+        },
+        "queue": {
+            "enabled": true,
+            "queue_size": 1000,
+            "batch_size": 100,
+            "flush_interval": 30,
+            "worker_count": 2,
+            "target_handlers": ["azure-appinsights", "ms-sql"],
+            "retry": {
+                "max_retries": 3,
+                "retry_interval": 5
+            }
+        }
+    },
+    "loggers": {
+        "root": {
+            "level": "WARNING",
+            "handlers": ["console"]
+        },
+        "app": {
+            "level": "INFO",
+            "handlers": ["console", "azure-blob"],
+            "propagate": false,
+            "qualname": "skyarclog.app"
+        },
+        "app.api": {
+            "level": "INFO",
+            "handlers": ["console", "azure-blob", "azure-appinsights"],
+            "propagate": true,
+            "qualname": "skyarclog.app.api"
+        },
+        "app.background": {
+            "level": "DEBUG",
+            "handlers": ["console", "azure-blob"],
+            "propagate": true,
+            "qualname": "skyarclog.app.background"
+        },
+        "app.security": {
+            "level": "WARNING",
+            "handlers": ["console", "azure-blob", "azure-appinsights"],
+            "propagate": false,
+            "qualname": "skyarclog.app.security"
+        },
+        "app.audit": {
+            "level": "INFO",
+            "handlers": ["azure-blob", "ms-sql"],
+            "propagate": false,
+            "qualname": "skyarclog.app.audit"
+        }
+    },
+    "security": {
+        "encryption": {
+            "enabled": true,
+            "type": "aes-gcm",
+            "key_rotation_interval": "1d"
+        },
+        "signatures": {
+            "enabled": true,
+            "key_rotation_interval": "7d"
+        },
+        "validation": {
+            "enabled": true,
+            "chain_size": 1000,
+            "export_interval": "30m",
+            "export_path": "/var/log/your-app/chain.json"
+        }
+    }
+}
