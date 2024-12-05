@@ -48,11 +48,6 @@
             "format": "json",
             "instrumentation_key": "${kv:APPINSIGHTS-INSTRUMENTATION-KEY}",
             "enable_local_storage": true,
-            "custom_dimensions": {
-                "environment": "${kv:ENVIRONMENT}",
-                "service": "${kv:SERVICE-NAME}",
-                "version": "${kv:APP-VERSION}"
-            },
             "buffer": {
                 "enabled": true,
                 "max_size": 1000,

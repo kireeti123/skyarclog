@@ -178,20 +178,6 @@ class SkyArcLogger:
             if config['instrumentation_key'].startswith('${kv:')
             else config['instrumentation_key']
         )
-        
-        # Create custom dimensions processor
-        def dimensions_processor(envelope):
-            """Process custom dimensions for each log entry."""
-            custom_dimensions = config.get('custom_dimensions', {})
-            envelope.tags.update({
-                k: (
-                    self.config_manager.get_secret(v[4:-1])
-                    if isinstance(v, str) and v.startswith('${kv:') and v.endswith('}')
-                    else v
-                )
-                for k, v in custom_dimensions.items()
-            })
-            return True
 
         # Initialize Azure Log Handler
         handler = AzureLogHandler(
@@ -200,9 +186,6 @@ class SkyArcLogger:
             buffer_size=config.get('buffer', {}).get('max_size', 1000),
             queue_capacity=config.get('buffer', {}).get('queue_size', 5000)
         )
-        
-        # Add custom processor for dimensions
-        handler.add_telemetry_processor(dimensions_processor)
         
         # Configure sampling if enabled
         sampling_config = config.get('sampling', {})

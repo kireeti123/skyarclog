@@ -24,27 +24,22 @@ def simulate_user_activity(logger: logging.Logger, user_id: str, duration: int =
     start_time = time.time()
     while time.time() - start_time < duration:
         activity, level = random.choice(activities)
-        extra = {
-            'user_id': user_id,
-            'session_id': f"sess_{random.randint(1000, 9999)}",
-            'client_ip': f"192.168.1.{random.randint(1, 255)}",
-            'timestamp': datetime.utcnow().isoformat()
-        }
+        message = f"[User {user_id}] {activity}"
         
         log_func = getattr(logger, level.lower())
         try:
             if level in ["ERROR", "WARNING"]:
                 try:
-                    raise Exception(f"Simulated {level.lower()}: {activity}")
+                    raise Exception(f"Simulated {level.lower()}: {message}")
                 except Exception as e:
                     if level == "ERROR":
-                        logger.error(str(e), extra=extra, exc_info=True)
+                        logger.error(str(e), exc_info=True)
                     else:
-                        logger.warning(str(e), extra=extra)
+                        logger.warning(str(e))
             else:
-                log_func(f"User Activity: {activity}", extra=extra)
+                log_func(message)
         except Exception as e:
-            logger.error(f"Logging failed: {str(e)}", extra=extra, exc_info=True)
+            logger.error(f"Logging failed: {str(e)}", exc_info=True)
         
         time.sleep(random.uniform(0.1, 2.0))
 
@@ -59,11 +54,7 @@ def main():
     perf_logger = logger.get_logger('performance')
     
     # Log application startup
-    app_logger.info("Application starting", extra={
-        'version': '1.0.0',
-        'environment': 'production',
-        'startup_time': datetime.utcnow().isoformat()
-    })
+    app_logger.info("Application starting - Version 1.0.0")
     
     try:
         # Simulate multiple users
@@ -79,21 +70,19 @@ def main():
             thread.start()
             
             # Log user session start
-            auth_logger.info(f"User session started", extra={
-                'user_id': user_id,
-                'thread_id': thread.ident
-            })
+            auth_logger.info(f"User session started - {user_id}")
         
         # Monitor performance while users are active
         start_time = time.time()
         while any(t.is_alive() for t in threads):
             # Simulate performance metrics
-            perf_logger.info("Performance metrics", extra={
-                'cpu_usage': random.uniform(20, 80),
-                'memory_usage': random.uniform(40, 90),
-                'active_threads': len([t for t in threads if t.is_alive()]),
-                'uptime': time.time() - start_time
-            })
+            cpu = random.uniform(20, 80)
+            memory = random.uniform(40, 90)
+            active = len([t for t in threads if t.is_alive()])
+            perf_logger.info(
+                f"Performance metrics - CPU: {cpu:.1f}%, Memory: {memory:.1f}%, "
+                f"Active threads: {active}"
+            )
             time.sleep(5)
         
         # Wait for all threads to complete
@@ -103,16 +92,11 @@ def main():
         app_logger.info("All user sessions completed")
         
     except Exception as e:
-        app_logger.error("Application error", exc_info=True, extra={
-            'error_type': type(e).__name__,
-            'error_details': str(e)
-        })
+        app_logger.error(f"Application error: {str(e)}", exc_info=True)
     finally:
         # Log application shutdown
-        app_logger.info("Application shutting down", extra={
-            'shutdown_time': datetime.utcnow().isoformat(),
-            'total_runtime': time.time() - start_time
-        })
+        runtime = time.time() - start_time
+        app_logger.info(f"Application shutting down - Runtime: {runtime:.1f}s")
 
 if __name__ == "__main__":
     main()
