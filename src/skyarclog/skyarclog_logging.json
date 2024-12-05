@@ -46,12 +46,12 @@
         "azure-appinsights": {
             "enabled": true,
             "format": "json",
-            "instrumentation_key": "${AZURE_INSTRUMENTATION_KEY}",
-            "connection_string": "${AZURE_APPINSIGHTS_CONNECTION_STRING}",
+            "instrumentation_key": "${kv:APPINSIGHTS-INSTRUMENTATION-KEY}",
+            "connection_string": "${kv:APPINSIGHTS-CONNECTION-STRING}",
             "custom_dimensions": {
-                "environment": "${ENV}",
-                "service": "${SERVICE_NAME}",
-                "version": "${APP_VERSION}"
+                "environment": "${kv:ENVIRONMENT}",
+                "service": "${kv:SERVICE-NAME}",
+                "version": "${kv:APP-VERSION}"
             },
             "buffer": {
                 "enabled": true,
@@ -85,8 +85,8 @@
         "azure-blob": {
             "enabled": true,
             "format": "json",
-            "container_connection_string": "${AZURE_BLOB_CONNECTION_STRING}",
-            "container_name": "${BLOB_CONTAINER_NAME}",
+            "container_connection_string": "${kv:STORAGE-CONNECTION-STRING}",
+            "container_name": "${kv:BLOB-CONTAINER-NAME}",
             "folder_structure": "{year}/{month}/{day}/{hour}",
             "file_prefix": "app_log",
             "file_extension": ".json",
@@ -117,7 +117,7 @@
         "ms-sql": {
             "enabled": true,
             "format": "json",
-            "connection_string": "${AZURE_SQL_CONNECTION_STRING}",
+            "connection_string": "${kv:SQL-CONNECTION-STRING}",
             "table_name": "ApplicationLogs",
             "schema_name": "dbo",
             "buffer": {

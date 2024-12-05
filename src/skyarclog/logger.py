@@ -16,6 +16,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from pythonjsonlogger import jsonlogger
 import pyodbc
+from config_manager import ConfigurationManager
 
 class MemoryHandlerWithInterval(MemoryHandler):
     """Extended MemoryHandler with time-based flushing."""
@@ -70,9 +71,10 @@ class BatchQueueHandler(QueueHandler):
                 self.batch = []
 
 class SkyArcLogger:
-    def __init__(self, config_path: str = None):
+    def __init__(self, config_path: str = None, env_path: str = None):
         """Initialize the SkyArc Logger with configuration."""
-        self.config = self._load_config(config_path)
+        self.config_manager = ConfigurationManager(env_path)
+        self.config = self.config_manager.load_config(config_path)
         self.loggers: Dict[str, logging.Logger] = {}
         self.queue_listeners: List[QueueListener] = []
         self._setup_logging()
@@ -146,20 +148,35 @@ class SkyArcLogger:
                 except Exception:
                     self.handleError(record)
 
-        handler = AzureBlobHandler(
-            connection_string=os.getenv(config['container_connection_string'].strip('${}')),
-            container_name=os.getenv(config['container_name'].strip('${}'))
+        # Get connection string from Key Vault if it's a reference
+        connection_string = (
+            self.config_manager.get_secret(config['container_connection_string'][4:-1])
+            if config['container_connection_string'].startswith('${kv:')
+            else config['container_connection_string']
         )
+        
+        container_name = (
+            self.config_manager.get_secret(config['container_name'][4:-1])
+            if config['container_name'].startswith('${kv:')
+            else config['container_name']
+        )
+
+        handler = AzureBlobHandler(connection_string=connection_string, container_name=container_name)
         formatter = jsonlogger.JsonFormatter()
         handler.setFormatter(formatter)
         return handler
 
     def _create_appinsights_handler(self, config: dict) -> logging.Handler:
         """Create an Azure Application Insights logging handler."""
-        tracer_provider = TracerProvider()
-        azure_exporter = AzureMonitorTraceExporter(
-            connection_string=os.getenv(config['connection_string'].strip('${}'))
+        # Get connection string from Key Vault if it's a reference
+        connection_string = (
+            self.config_manager.get_secret(config['connection_string'][4:-1])
+            if config['connection_string'].startswith('${kv:')
+            else config['connection_string']
         )
+
+        tracer_provider = TracerProvider()
+        azure_exporter = AzureMonitorTraceExporter(connection_string=connection_string)
         span_processor = BatchSpanProcessor(azure_exporter)
         tracer_provider.add_span_processor(span_processor)
 
@@ -187,6 +204,13 @@ class SkyArcLogger:
 
     def _create_sql_handler(self, config: dict) -> logging.Handler:
         """Create an Azure SQL Database logging handler."""
+        # Get connection string from Key Vault if it's a reference
+        connection_string = (
+            self.config_manager.get_secret(config['connection_string'][4:-1])
+            if config['connection_string'].startswith('${kv:')
+            else config['connection_string']
+        )
+
         class AzureSQLHandler(logging.Handler):
             def __init__(self, connection_string: str):
                 super().__init__()
@@ -230,7 +254,7 @@ class SkyArcLogger:
                 except Exception:
                     self.handleError(record)
 
-        handler = AzureSQLHandler(config['connection_string'])
+        handler = AzureSQLHandler(connection_string)
         formatter = jsonlogger.JsonFormatter()
         handler.setFormatter(formatter)
         return handler
