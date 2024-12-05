@@ -8,8 +8,8 @@
         },
         "file": {
             "path": "/var/log/skyarclog/app.log",
-            "max_size": "500MB",
-            "backup_count": 10
+            "max_size": "1GB",
+            "backup_count": 20
         },
         "azure-appinsights": {
             "format": "json",
@@ -35,7 +35,7 @@
         },
         "critical": {
             "level": ["ERROR", "CRITICAL"],
-            "handlers": ["azure-blob", "azure-appinsights"]
+            "handlers": ["azure-blob", "azure-appinsights", "ms-sql"]
         }
     },
     "security": {
