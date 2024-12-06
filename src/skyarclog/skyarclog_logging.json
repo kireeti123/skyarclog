@@ -146,7 +146,7 @@
             },
             "cleanup": {
                 "enabled": true,
-                "retention_days": 90,
+                "retention_days": 365,
                 "batch_size": 1000,
                 "schedule": "0 0 * * *"
             }
