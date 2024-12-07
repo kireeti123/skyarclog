@@ -1,107 +1,132 @@
-"""SkyArcLog main logger module."""
+"""SkyArcLog logger implementation."""
 
-import json
 import logging
-import os
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-from datetime import datetime
-from queue import Queue
-from pythonjsonlogger import jsonlogger
-
-from skyarclog.handlers.base_handler import BaseHandler
-from skyarclog.handlers.core import (
-    create_console_handler,
-    create_file_handler,
-    create_memory_handler,
-    create_queue_handler,
-    create_blob_handler,
-    create_appinsights_handler,
-    create_sql_handler
-)
-from skyarclog.config.validator import validate_handler_config, ConfigValidationError
-
+from typing import Dict, Any, Optional
+from .core.plugin_manager import PluginManager
+from .config_manager import ConfigManager
 
 class SkyArcLogger:
     """Main logger class for SkyArcLog."""
 
-    def __init__(
-        self,
-        name: str,
-        handlers_config: Optional[List[Dict]] = None,
-        config_manager=None
-    ):
+    # Map string level names to numeric values
+    _LEVEL_MAP = {
+        'DEBUG': logging.DEBUG,
+        'INFO': logging.INFO,
+        'WARNING': logging.WARNING,
+        'ERROR': logging.ERROR,
+        'CRITICAL': logging.CRITICAL
+    }
+
+    def __init__(self, config_path: Optional[str] = None):
         """Initialize the logger.
         
         Args:
-            name (str): Logger name
-            handlers_config (Optional[List[Dict]]): List of handler configurations
-            config_manager: Configuration manager instance
-            
-        Raises:
-            ConfigValidationError: If handler configuration is invalid
+            config_path: Optional path to configuration file
         """
-        self.logger = logging.getLogger(name)
-        self.logger.setLevel(logging.DEBUG)  # Allow all logs, filter at handler level
-        
-        self.base_handler = BaseHandler(config_manager)
-        self._setup_handlers(handlers_config or [])
+        self._config_manager = ConfigManager(config_path)
+        self._plugin_manager = PluginManager()
+        self._listeners = {}
+        self._transformers = {}
+        self._level = logging.INFO  # Default level
+        self._initialize_components()
 
-    def _setup_handlers(self, handlers_config: List[Dict]) -> None:
-        """Set up handlers based on configuration.
+    def _initialize_components(self) -> None:
+        """Initialize listeners and transformers from configuration."""
+        config = self._config_manager.get_config()
+        
+        # Initialize transformers first
+        transformer_configs = config.get('transformers', {})
+        for name, transformer_config in transformer_configs.items():
+            if transformer_config.get('enabled', True):
+                transformer = self._plugin_manager.create_transformer(
+                    transformer_config['type'],
+                    transformer_config.get('config', {})
+                )
+                if transformer:
+                    self._transformers[name] = transformer
+
+        # Initialize listeners
+        listener_configs = config.get('listeners', {})
+        for name, listener_config in listener_configs.items():
+            if listener_config.get('enabled', True):
+                # Get associated transformer if specified
+                transformer = None
+                transformer_name = listener_config.get('transformer')
+                if transformer_name:
+                    transformer = self._transformers.get(transformer_name)
+
+                listener = self._plugin_manager.create_listener(name, {
+                    **listener_config,
+                    'transformer': transformer
+                })
+                if listener:
+                    self._listeners[name] = listener
+
+        # Set log level from configuration
+        logger_configs = config.get('loggers', {})
+        root_config = logger_configs.get('root', {})
+        level_name = root_config.get('level', 'INFO')
+        self._level = self._LEVEL_MAP.get(level_name, logging.INFO)
+
+    def _should_log(self, level: str) -> bool:
+        """Check if a message at the given level should be logged.
         
         Args:
-            handlers_config (List[Dict]): List of handler configurations
+            level: Log level to check
             
-        Raises:
-            ConfigValidationError: If handler configuration is invalid
+        Returns:
+            bool: True if the message should be logged, False otherwise
         """
-        for handler_config in handlers_config:
-            handler_type = handler_config.get('type')
-            if not handler_type:
-                raise ConfigValidationError("Handler configuration must specify 'type'")
+        level_value = self._LEVEL_MAP.get(level, logging.NOTSET)
+        return level_value >= self._level
 
-            # Validate handler configuration
-            validate_handler_config(handler_type, handler_config)
-            
-            # Create and add handler
-            handler = self.base_handler.create_handler(handler_type, handler_config)
-            if handler:
-                self.logger.addHandler(handler)
+    def log(self, level: str, message: str, **kwargs) -> None:
+        """Log a message.
+        
+        Args:
+            level: Log level
+            message: Log message
+            **kwargs: Additional log data
+        """
+        if not self._should_log(level):
+            return
 
-    def debug(self, msg: str, *args, **kwargs) -> None:
+        log_data = {
+            'level': level,
+            'message': message,
+            **kwargs
+        }
+
+        for listener in self._listeners.values():
+            try:
+                listener.handle(log_data)
+            except Exception as e:
+                logging.error(f"Error in listener {listener.__class__.__name__}: {str(e)}")
+
+    def debug(self, message: str, **kwargs) -> None:
         """Log a debug message."""
-        self.logger.debug(msg, *args, **kwargs)
+        self.log('DEBUG', message, **kwargs)
 
-    def info(self, msg: str, *args, **kwargs) -> None:
+    def info(self, message: str, **kwargs) -> None:
         """Log an info message."""
-        self.logger.info(msg, *args, **kwargs)
+        self.log('INFO', message, **kwargs)
 
-    def warning(self, msg: str, *args, **kwargs) -> None:
+    def warning(self, message: str, **kwargs) -> None:
         """Log a warning message."""
-        self.logger.warning(msg, *args, **kwargs)
+        self.log('WARNING', message, **kwargs)
 
-    def error(self, msg: str, *args, **kwargs) -> None:
+    def error(self, message: str, **kwargs) -> None:
         """Log an error message."""
-        self.logger.error(msg, *args, **kwargs)
+        self.log('ERROR', message, **kwargs)
 
-    def critical(self, msg: str, *args, **kwargs) -> None:
+    def critical(self, message: str, **kwargs) -> None:
         """Log a critical message."""
-        self.logger.critical(msg, *args, **kwargs)
-
-    def exception(self, msg: str, *args, **kwargs) -> None:
-        """Log an exception message."""
-        self.logger.exception(msg, *args, **kwargs)
-
-    def log(self, level: Union[int, str], msg: str, *args, **kwargs) -> None:
-        """Log a message with specified level."""
-        if isinstance(level, str):
-            level = getattr(logging, level.upper())
-        self.logger.log(level, msg, *args, **kwargs)
+        self.log('CRITICAL', message, **kwargs)
 
     def close(self) -> None:
-        """Close the logger and clean up resources."""
-        self.base_handler.stop_queue_listeners()
-        for handler in self.logger.handlers:
-            handler.close()
-            self.logger.removeHandler(handler)
+        """Close all listeners."""
+        for listener in self._listeners.values():
+            try:
+                listener.close()
+            except Exception as e:
+                logging.error(f"Error closing listener {listener.__class__.__name__}: {str(e)}")

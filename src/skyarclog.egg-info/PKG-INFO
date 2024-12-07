@@ -1,0 +1,74 @@
+Metadata-Version: 2.1
+Name: skyarclog
+Version: 0.1.0
+Summary: A modular, cloud-agnostic logging framework
+Home-page: https://github.com/yourusername/skyarclog
+Author: Your Name
+Author-email: your.email@example.com
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: python-json-logger>=2.0.7
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: colorama>=0.4.6
+Provides-Extra: azure
+Requires-Dist: azure-storage-blob>=12.0.0; extra == "azure"
+Requires-Dist: opencensus-ext-azure>=1.1.9; extra == "azure"
+Requires-Dist: opencensus-ext-logging>=0.1.0; extra == "azure"
+Requires-Dist: azure-identity>=1.12.0; extra == "azure"
+Requires-Dist: azure-keyvault-secrets>=4.7.0; extra == "azure"
+Provides-Extra: sql
+Requires-Dist: pyodbc>=4.0.39; extra == "sql"
+Provides-Extra: protobuf
+Requires-Dist: protobuf>=4.21.0; extra == "protobuf"
+Provides-Extra: all
+Requires-Dist: azure-storage-blob>=12.0.0; extra == "all"
+Requires-Dist: opencensus-ext-azure>=1.1.9; extra == "all"
+Requires-Dist: opencensus-ext-logging>=0.1.0; extra == "all"
+Requires-Dist: azure-identity>=1.12.0; extra == "all"
+Requires-Dist: azure-keyvault-secrets>=4.7.0; extra == "all"
+Requires-Dist: pyodbc>=4.0.39; extra == "all"
+Requires-Dist: protobuf>=4.21.0; extra == "all"
+
+# SkyArcLog
+
+A modular, cloud-agnostic logging framework with plugin support for various logging destinations and data transformations.
+
+## Features
+
+- Modular plugin architecture
+- Dynamic loading of listeners and transformers
+- Multiple logging destinations (Console, File, Azure, SQL)
+- Flexible data transformations (JSON, SQL, Protobuf)
+- Cloud-agnostic design
+- Configurable through JSON
+
+## Installation
+
+```bash
+# Minimal install (console + file logging)
+pip install skyarclog
+
+# Azure logging
+pip install skyarclog[azure]
+
+# SQL logging
+pip install skyarclog[sql]
+
+# Protobuf support
+pip install skyarclog[protobuf]
+
+# Full installation
+pip install skyarclog[all]
+```
+
+## Usage
+
+See the examples directory for detailed usage examples.

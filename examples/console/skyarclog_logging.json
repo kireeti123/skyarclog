@@ -1,0 +1,76 @@
+{
+    "version": "1.0",
+    "name": "Console Logging Example",
+    "transformers": {
+        "json": {
+            "type": "json_formatter",
+            "config": {
+                "indent": 2,
+                "sort_keys": true
+            }
+        }
+    },
+    "listeners": {
+        "console": {
+            "enabled": true,
+            "transformer": "json",
+            "config": {
+                "colored": true,
+                "colors": {
+                    "DEBUG": "cyan",
+                    "INFO": "green",
+                    "WARNING": "yellow",
+                    "ERROR": "red",
+                    "CRITICAL": "red,bold"
+                },
+                "show_timestamp": true,
+                "timestamp_format": "%Y-%m-%d %H:%M:%S.%f",
+                "show_level": true
+            }
+        },
+        "memory": {
+            "enabled": true,
+            "capacity": 1000,
+            "flush_level": "ERROR",
+            "target_handlers": ["console", ""],
+            "flush_on_capacity": true,
+            "flush_interval": 60
+        },
+        "queue": {
+            "enabled": true,
+            "queue_size": 1000,
+            "batch_size": 100,
+            "flush_interval": 30,
+            "worker_count": 2,
+            "target_handlers": ["console"],
+            "retry": {
+                "enabled": true,
+                "max_retries": 3,
+                "retry_interval": 5
+            }
+        }
+    },
+    "loggers": {
+        "root": {
+            "level": "WARNING",
+            "handlers": ["console"]
+        }
+    },
+    "security": {
+        "encryption": {
+            "enabled": true,
+            "type": "aes-gcm",
+            "key_rotation_interval": "1d"
+        },
+        "signatures": {
+            "enabled": true,
+            "key_rotation_interval": "7d"
+        },
+        "validation": {
+            "enabled": true,
+            "chain_size": 1000,
+            "export_interval": "30m",
+            "export_path": "/var/log/your-app/chain.json"
+        }
+    }
+}

@@ -1,6 +1,29 @@
 {
     "version": 1.0,
     "name": "Client App 1",
+    "transformers": {
+        "json": {
+            "type": "json_formatter",
+            "config": {
+                "indent": 2,
+                "sort_keys": true
+            }
+        },
+        "sql": {
+            "type": "sql_formatter",
+            "config": {
+                "date_format": "%Y-%m-%d %H:%M:%S.%f",
+                "max_field_length": 4000
+            }
+        },
+        "protobuf": {
+            "type": "protobuf_transformer",
+            "config": {
+                "preserve_proto_field_names": true,
+                "message_type": "LogMessage"
+            }
+        }
+    },
     "listeners": {
         "console": {
             "enabled": true,
@@ -22,7 +45,7 @@
         },
         "file": {
             "enabled": true,
-            "format": "json",
+            "transformer": "json",
             "path": "/var/log/skyarclog/app.log",
             "max_size": "500MB",
             "backup_count": 10,
@@ -55,6 +78,7 @@
                 "batch_size": 100
             },
             "retry": {
+                "enabled": true,
                 "max_retries": 3,
                 "initial_delay": 1,
                 "max_delay": 60,
@@ -79,12 +103,12 @@
         },
         "azure-blob": {
             "enabled": true,
-            "format": "json",
+            "transformer": "protobuf",
             "container_connection_string": "${kv:STORAGE-CONNECTION-STRING}",
             "container_name": "${kv:BLOB-CONTAINER-NAME}",
             "folder_structure": "{year}/{month}/{day}/{hour}",
             "file_prefix": "app_log",
-            "file_extension": ".json",
+            "file_extension": ".pb",
             "compression": {
                 "enabled": true,
                 "algorithm": "gzip",
@@ -97,6 +121,7 @@
                 "batch_size": 100
             },
             "retry": {
+                "enabled": true,
                 "max_retries": 3,
                 "initial_delay": 1,
                 "max_delay": 60,
@@ -111,7 +136,7 @@
         },
         "ms-sql": {
             "enabled": true,
-            "format": "json",
+            "transformer": "sql",
             "connection_string": "${kv:SQL-CONNECTION-STRING}",
             "table_name": "ApplicationLogs",
             "schema_name": "dbo",
@@ -122,6 +147,7 @@
                 "batch_size": 100
             },
             "retry": {
+                "enabled": true,
                 "max_retries": 3,
                 "initial_delay": 1,
                 "max_delay": 60,
@@ -167,6 +193,7 @@
             "worker_count": 2,
             "target_handlers": ["azure-appinsights", "ms-sql"],
             "retry": {
+                "enabled": true,
                 "max_retries": 3,
                 "retry_interval": 5
             }

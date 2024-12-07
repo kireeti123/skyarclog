@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package skyarclog;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+// Default log message format
+message LogMessage {
+    // Timestamp when the log was created
+    google.protobuf.Timestamp timestamp = 1;
+    
+    // Log level (DEBUG, INFO, WARNING, ERROR, etc.)
+    string level = 2;
+    
+    // Main log message
+    string message = 3;
+    
+    // Logger name
+    string logger = 4;
+    
+    // Additional properties as a dynamic structure
+    google.protobuf.Struct properties = 5;
+    
+    // Exception details if any
+    ExceptionInfo exception = 6;
+    
+    // Correlation ID for request tracing
+    string correlation_id = 7;
+    
+    // Application name
+    string application_name = 8;
+    
+    // Environment (dev, staging, prod)
+    string environment = 9;
+}
+
+// Exception information
+message ExceptionInfo {
+    // Exception type name
+    string type = 1;
+    
+    // Exception message
+    string message = 2;
+    
+    // Stack trace as a string
+    string stack_trace = 3;
+    
+    // Inner exception if any
+    ExceptionInfo inner_exception = 4;
+}

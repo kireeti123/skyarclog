@@ -1,0 +1,11 @@
+[skyarclog.listeners]
+azure_appinsights = skyarclog.listeners.azure.azure_appinsights_listener:AzureAppInsightsListener [azure]
+azure_blob = skyarclog.listeners.azure.azure_blob_listener:AzureBlobListener [azure]
+console = skyarclog.listeners.console.console_listener:ConsoleListener
+file = skyarclog.listeners.file.file_listener:FileListener
+ms_sql = skyarclog.listeners.sql.mssql_listener:MsSqlListener [sql]
+
+[skyarclog.transformers]
+json = skyarclog.transformers.json.json_transformer:JsonTransformer
+protobuf = skyarclog.transformers.protobuf.protobuf_transformer:ProtobufTransformer [protobuf]
+sql = skyarclog.transformers.sql.sql_transformer:SqlTransformer [sql]
