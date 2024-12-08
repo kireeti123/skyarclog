@@ -14,6 +14,9 @@ __all__ = [
     'core'
 ]
 
+# Global logger instance
+_GLOBAL_LOGGER = None
+
 def __getattr__(name):
     """
     Lazily import modules to prevent circular imports.
@@ -24,27 +27,30 @@ def __getattr__(name):
     Returns:
         Imported module or function
     """
+    global _GLOBAL_LOGGER
+
     if name == 'log':
         from .logger import log
         return log
     elif name == 'configure':
         from .logger import configure
         return configure
-    elif name == 'debug':
-        from .logger import debug
-        return debug
-    elif name == 'info':
-        from .logger import info
-        return info
-    elif name == 'warning':
-        from .logger import warning
-        return warning
-    elif name == 'error':
-        from .logger import error
-        return error
-    elif name == 'critical':
-        from .logger import critical
-        return critical
+    elif name in ['debug', 'info', 'warning', 'error', 'critical']:
+        from .logger import debug, info, warning, error, critical
+        
+        # Ensure we have a global logger
+        if _GLOBAL_LOGGER is None:
+            _GLOBAL_LOGGER = configure()
+        
+        # Map the function to use the global logger
+        func_map = {
+            'debug': debug,
+            'info': info,
+            'warning': warning,
+            'error': error,
+            'critical': critical
+        }
+        return func_map[name]
     elif name == 'logger':
         from . import logger
         return logger

@@ -169,13 +169,36 @@ def critical(message: str, **kwargs) -> None:
     """Log a critical message."""
     log('CRITICAL', message, **kwargs)
 
-def configure(config_path: Optional[str] = None) -> None:
+def configure(config_path: Optional[str] = None) -> SkyArcLogger:
     """
     Configure the logger with a given configuration file.
     
     Args:
         config_path: Path to the configuration file
+    
+    Returns:
+        Configured SkyArcLogger instance
     """
-    # If no config path is provided, use the default configuration
-    logger = SkyArcLogger(config_path)
-    # Additional configuration logic can be added here if needed
+    # Ensure the config path is an absolute path if it's a relative path
+    if config_path and not Path(config_path).is_absolute():
+        # Convert relative path to absolute path from the current working directory
+        config_path = str(Path.cwd() / config_path)
+    
+    try:
+        # Create and return the logger instance
+        logger = SkyArcLogger(config_path)
+        
+        # Set as global logger if no listeners were configured
+        if not logger._listeners:
+            warnings.warn(
+                "No listeners configured. Falling back to default logging.", 
+                LoggerConfigurationWarning
+            )
+        
+        return logger
+    except Exception as e:
+        # Log the configuration error
+        warnings.warn(f"Failed to configure logger: {e}", LoggerConfigurationWarning)
+        
+        # Return a default logger with no specific configuration
+        return SkyArcLogger()
