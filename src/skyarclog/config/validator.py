@@ -3,6 +3,15 @@
 from typing import Dict, Any
 import logging
 
+# Export the new validation function
+__all__ = [
+    'ConfigValidationError', 
+    'validate_configuration', 
+    'validate_formatters',
+    'validate_handler_config',
+    'validate_listeners'
+]
+
 
 class ConfigValidationError(Exception):
     """Exception raised for configuration validation errors."""
@@ -218,52 +227,34 @@ def validate_configuration(config: Dict[str, Any]) -> None:
     Raises:
         ConfigValidationError: If configuration is invalid
     """
-    # Validate top-level configuration keys
+    # Validate required top-level keys
     required_keys = ['version', 'name']
     for key in required_keys:
         if key not in config:
             raise ConfigValidationError(f"Missing required configuration key: {key}")
     
     # Validate version
-    if not isinstance(config['version'], (float, int)) or config['version'] < 1.0:
-        raise ConfigValidationError("Invalid configuration version. Must be a number >= 1.0")
+    if not isinstance(config['version'], (int, float)):
+        raise ConfigValidationError("Version must be a number")
+    
+    # Validate formatters
+    if 'formatters' in config:
+        validate_formatters(config['formatters'])
     
     # Validate listeners
-    listeners = config.get('listeners', {})
-    if not isinstance(listeners, dict):
-        raise ConfigValidationError("'listeners' must be a dictionary")
+    if 'listeners' in config:
+        validate_listeners(config['listeners'])
     
-    for listener_name, listener_config in listeners.items():
-        # Validate listener configuration
-        if not isinstance(listener_config, dict):
-            raise ConfigValidationError(f"Listener '{listener_name}' configuration must be a dictionary")
-        
-        # Check for required listener fields
-        if 'type' not in listener_config:
-            pass
-        
-        # Validate formatter configuration
-        formatter = listener_config.get('formatter', {})
-        if not isinstance(formatter, dict):
-            raise ConfigValidationError(f"Formatter for listener '{listener_name}' must be a dictionary")
-        
-        formatter_type = formatter.get('type', 'text')
-        if formatter_type not in ['json', 'text']:
-            raise ConfigValidationError(f"Invalid formatter type '{formatter_type}' for listener '{listener_name}'. Must be 'json' or 'text'")
-        
-        # If JSON formatter is specified, ensure additional JSON-specific validations
-        if formatter_type == 'json':
-            if not _validate_json_formatter(formatter):
-                raise ConfigValidationError(f"Invalid JSON formatter configuration for listener '{listener_name}'")
-    
-    # Validate transformers
-    transformers = config.get('transformers', {})
-    if not isinstance(transformers, dict):
-        raise ConfigValidationError("'transformers' must be a dictionary")
-    
-    for transformer_name, transformer_config in transformers.items():
-        if not isinstance(transformer_config, dict):
-            raise ConfigValidationError(f"Transformer '{transformer_name}' configuration must be a dictionary")
+    # Optional: Additional global configuration validation
+    if 'loggers' in config:
+        # Validate logger configurations
+        root_logger = config['loggers'].get('root', {})
+        level = root_logger.get('level', 'WARNING').upper()
+        valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        if level not in valid_levels:
+            raise ConfigValidationError(
+                f"Invalid root logger level: {level}. Must be one of {valid_levels}"
+            )
 
 
 def _validate_json_formatter(formatter: Dict[str, Any]) -> bool:
@@ -287,3 +278,122 @@ def _validate_json_formatter(formatter: Dict[str, Any]) -> bool:
             return False
     
     return True
+
+
+def validate_formatters(formatters: Dict[str, Any]) -> None:
+    """
+    Validate formatters configuration.
+    
+    Args:
+        formatters (Dict): Formatters configuration dictionary
+    
+    Raises:
+        ConfigValidationError: If any formatter configuration is invalid
+    """
+    # Import formatters dynamically to avoid circular imports
+    from skyarclog.formatters import (
+        json_formatter, 
+        sql_formatter, 
+        protobuf_formatter, 
+        base_formatter
+    )
+    
+    # Mapping of formatter names to their respective classes
+    formatter_classes = {
+        'json_formatter': json_formatter.JsonFormatter,
+        'sql_formatter': sql_formatter.SqlFormatter,
+        'protobuf_transformer': protobuf_formatter.ProtobufFormatter
+    }
+    
+    # Validate each formatter
+    for formatter_name, formatter_config in formatters.items():
+        # Determine formatter type
+        formatter_type = formatter_config.get('type', formatter_name + '_formatter')
+        
+        # Check if formatter type exists
+        if formatter_type not in formatter_classes:
+            raise ConfigValidationError(
+                f"Invalid formatter type '{formatter_type}'. "
+                f"Available formatters are: {list(formatter_classes.keys())}"
+            )
+        
+        # Get the formatter class
+        formatter_class = formatter_classes[formatter_type]
+        
+        # Validate formatter-specific configuration
+        try:
+            config = formatter_config.get('config', {})
+            # Attempt to create an instance to validate configuration
+            formatter_class(config)
+        except Exception as e:
+            raise ConfigValidationError(
+                f"Invalid configuration for formatter '{formatter_name}': {str(e)}"
+            )
+
+
+def validate_listeners(listeners: Dict[str, Any]) -> None:
+    """
+    Validate listeners configuration.
+    
+    Args:
+        listeners (Dict): Listeners configuration dictionary
+    
+    Raises:
+        ConfigValidationError: If any listener configuration is invalid
+    """
+    # Import listeners dynamically to avoid circular imports
+    from skyarclog.listeners import (
+        console_listener,
+        file_listener,
+        azure_appinsights_listener,
+        azure_blob_listener,
+        azure_sql_listener,
+        base_listener
+    )
+    
+    # Mapping of listener names to their respective classes
+    listener_classes = {
+        'console': console_listener.ConsoleListener,
+        'file': file_listener.FileListener,
+        'azure-appinsights': azure_appinsights_listener.AzureAppInsightsListener,
+        'azure-blob': azure_blob_listener.AzureBlobListener,
+        'azure-sql': azure_sql_listener.AzureSqlListener
+    }
+    
+    # Validate each listener
+    for listener_name, listener_config in listeners.items():
+        # Skip if listener is not enabled
+        if not listener_config.get('enabled', False):
+            continue
+        
+        # Determine listener type
+        # Try to match based on known mappings first
+        listener_type = None
+        for key, cls in listener_classes.items():
+            if listener_name.lower().startswith(key):
+                listener_type = key
+                break
+        
+        # If no match found, use the listener name directly
+        if listener_type is None:
+            listener_type = listener_name.lower()
+        
+        # Check if listener type exists
+        if listener_type not in listener_classes:
+            raise ConfigValidationError(
+                f"Invalid listener type for '{listener_name}'. "
+                f"Available listeners are: {list(listener_classes.keys())}"
+            )
+        
+        # Get the listener class
+        listener_class = listener_classes[listener_type]
+        
+        # Validate listener-specific configuration
+        try:
+            # Attempt to validate configuration by creating an instance
+            # This will trigger any configuration validation in the listener's __init__
+            listener_class(listener_config)
+        except Exception as e:
+            raise ConfigValidationError(
+                f"Invalid configuration for listener '{listener_name}': {str(e)}"
+            )
