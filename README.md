@@ -53,11 +53,11 @@ Create a `skyarclog_logging.json` configuration file:
         "root": {
             "level": "WARNING",
             "handlers": {
-                "DEBUG": ["debug-listener"],
-                "INFO": ["info-listener"],
+                "DEBUG": ["console"],
+                "INFO": ["console"],
                 "WARNING": ["console"],
                 "ERROR": ["console", "azure-blob"],
-                "CRITICAL": ["critical-alert"]
+                "CRITICAL": ["console"]
             }
         }
     }
@@ -114,8 +114,8 @@ Supported listeners:
         "root": {
             "level": "WARNING",
             "handlers": {
-                "DEBUG": ["debug-listener"],
-                "ERROR": ["console", "azure-blob", "alert-system"]
+                "DEBUG": ["console"],
+                "ERROR": ["console", "azure-blob", "ms-sql"]
             }
         }
     }
@@ -135,6 +135,127 @@ Supported listeners:
     }
 }
 ```
+
+## Configuration Reference
+
+#### Top-Level Configuration Fields
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `version` | Number | Optional | `1.0` | Configuration version |
+| `name` | String | Optional | `"Application"` | Name of the application |
+| `transformers` | Object | Optional | `{}` | Transformer configurations |
+| `listeners` | Object | Optional | `{}` | Listener configurations |
+| `loggers` | Object | **Required** | N/A | Logger configurations |
+
+#### Loggers Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `root.level` | String | Optional | `"INFO"` | Global logging level. Allowed values: `"DEBUG"`, `"INFO"`, `"WARNING"`, `"ERROR"`, `"CRITICAL"` |
+| `root.handlers` | Object/List | Optional | `[]` | Log handlers for different log levels |
+
+#### Listener Configuration
+
+Each listener has its own specific configuration. Here are some common fields:
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `enabled` | Boolean | Optional | `true` | Whether the listener is active |
+| `transformer` | String | Optional | `null` | Name of the transformer to use |
+
+##### Console Listener Specific Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `output` | String | Optional | `"stdout"` | Output stream (`"stdout"` or `"stderr"`) |
+| `colors.enabled` | Boolean | Optional | `true` | Enable colored output |
+| `show_timestamp` | Boolean | Optional | `true` | Display timestamp in log |
+| `show_level` | Boolean | Optional | `true` | Display log level |
+| `show_thread` | Boolean | Optional | `true` | Display thread information |
+| `show_process` | Boolean | Optional | `true` | Display process information |
+
+##### Azure Blob Listener Specific Configuration
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `container_connection_string` | String | **Required** | Azure Storage connection string |
+| `container_name` | String | **Required** | Name of the blob container |
+| `folder_structure` | String | Optional | Custom folder structure for logs |
+| `file_prefix` | String | Optional | Prefix for log files |
+| `compression.enabled` | Boolean | Optional | Enable log file compression |
+
+##### Azure App Insights Listener Specific Configuration
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `instrumentation_key` | String | **Required** | Azure App Insights instrumentation key |
+| `enable_local_storage` | Boolean | Optional | Enable local storage for logs |
+
+##### MS SQL Listener Specific Configuration
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `connection_string` | String | **Required** | SQL Database connection string |
+| `table_name` | String | Optional | Custom table name for logs |
+| `schema` | String | Optional | Database schema name |
+
+#### Example of a Comprehensive Configuration
+
+```json
+{
+    "version": 1.0,
+    "name": "My Complex Application",
+    "transformers": {
+        "json_transformer": {
+            "type": "json",
+            "config": {
+                "timestamp_format": "%Y-%m-%d %H:%M:%S",
+                "include_fields": ["message", "level", "timestamp"]
+            }
+        }
+    },
+    "listeners": {
+        "primary_console": {
+            "type": "console",
+            "enabled": true,
+            "transformer": "json_transformer",
+            "colors": {
+                "enabled": true,
+                "DEBUG": "cyan",
+                "ERROR": "red,bold"
+            },
+            "show_timestamp": true,
+            "show_level": true
+        },
+        "blob_backup": {
+            "type": "azure-blob",
+            "enabled": true,
+            "container_connection_string": "YOUR_AZURE_CONNECTION_STRING",
+            "container_name": "applogs",
+            "compression": {
+                "enabled": true
+            }
+        }
+    },
+    "loggers": {
+        "root": {
+            "level": "WARNING",
+            "handlers": {
+                "DEBUG": ["primary_console"],
+                "ERROR": ["primary_console", "blob_backup"]
+            }
+        }
+    }
+}
+```
+
+#### Notes on Configuration
+
+1. The configuration supports both simple list-based and advanced dictionary-based handler routing.
+2. Not all listeners need to be configured for every log level.
+3. Listeners and transformers are optional but recommended for comprehensive logging.
+4. Always keep sensitive information like connection strings secure and out of version control.
 
 ## Contributing
 
