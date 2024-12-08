@@ -180,6 +180,70 @@ You can extend the framework by creating custom listeners that implement the `Ba
 - Supports buffered and asynchronous logging
 - Configurable log levels and transformers
 
+## Repository Structure
+
+### `.gitignore`
+
+The project includes a comprehensive `.gitignore` file that covers:
+- Python-specific ignores
+  - `__pycache__/`
+  - `*.py[cod]`
+- Distribution and packaging files
+  - `dist/`
+  - `build/`
+  - `*.egg-info/`
+- Virtual environments
+  - `venv/`
+  - `.env/`
+- IDE-specific files
+  - `.idea/`
+  - `.vscode/`
+- Logging and temporary files
+  - `*.log`
+  - `*.tmp`
+- Operating system files
+  - `.DS_Store`
+  - `Thumbs.db`
+- Testing and coverage files
+  - `.coverage`
+  - `htmlcov/`
+- Sensitive configuration files
+  - `*.env`
+  - `*.secret`
+
+### Project Layout
+
+```
+skyarclog/
+│
+├── src/
+│   └── skyarclog/
+│       ├── __init__.py
+│       ├── logger.py
+│       ├── config_manager.py
+│       │
+│       ├── listeners/
+│       │   ├── base_listener.py
+│       │   └── console/
+│       │       └── console_listener.py
+│       │
+│       └── transformers/
+│           ├── __init__.py
+│           ├── base_transformer.py
+│           ├── text_transformer.py
+│           └── json_transformer.py
+│
+├── tests/
+│   └── ... (test files)
+│
+├── examples/
+│   └── ... (example usage scripts)
+│
+├── .gitignore
+├── pyproject.toml
+└── README.md
+```
+
 ## Contributing
 
 ### Getting Started
@@ -201,20 +265,6 @@ You can extend the framework by creating custom listeners that implement the `Ba
 - Provide a clear and descriptive title
 - Include steps to reproduce the issue
 - Share relevant code snippets or configuration
-
-## Repository Structure
-
-### `.gitignore`
-
-The project includes a comprehensive `.gitignore` file that covers:
-- Python-specific ignores
-- Distribution and packaging files
-- Virtual environments
-- IDE-specific files
-- Logging and temporary files
-- Operating system files
-- Testing and coverage files
-- Sensitive configuration files
 
 ## License
 
