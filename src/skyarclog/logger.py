@@ -144,10 +144,19 @@ def log(level: str, message: str, **kwargs) -> None:
         level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         message: Log message
         **kwargs: Additional log context
+    
+    Raises:
+        ConfigValidationError: If logger configuration is invalid
     """
-    # Create a logger with a default configuration
-    logger = SkyArcLogger(config_path=None)
-    logger.log(level, message, **kwargs)
+    try:
+        # Create a logger with a default configuration
+        logger = SkyArcLogger(config_path=None)
+        logger.log(level, message, **kwargs)
+    except ConfigValidationError as e:
+        # If configuration is invalid, prevent logging
+        warnings.warn(f"Logging disabled due to configuration error: {e}", RuntimeWarning)
+        # Optionally, log to stderr or a fallback mechanism
+        print(f"[LOGGING DISABLED] {level}: {message}", file=sys.stderr)
 
 def debug(message: str, **kwargs) -> None:
     """Log a debug message."""
@@ -178,39 +187,70 @@ def configure(config_path: Optional[str] = None) -> SkyArcLogger:
     
     Returns:
         Configured SkyArcLogger instance
+    
+    Raises:
+        ConfigValidationError: If configuration is invalid
     """
     # Import Path here to avoid potential circular imports
     from pathlib import Path
+    from .config.validator import validate_configuration, ConfigValidationError
     
     # Ensure the config path is an absolute path if it's a relative path
     if config_path:
         # Convert to absolute path, handling both relative and absolute paths
         config_path = str(Path(config_path).resolve())
     
+    def handle_config_change(new_config: Dict[str, Any]):
+        """
+        Handle configuration changes dynamically.
+        
+        Args:
+            new_config: New configuration dictionary
+        """
+        try:
+            # Validate the new configuration
+            validate_configuration(new_config)
+            
+            # Reinitialize logger components based on new configuration
+            logger = SkyArcLogger(config_path)
+            
+            # Update global logger if needed
+            global _GLOBAL_LOGGER
+            _GLOBAL_LOGGER = logger
+            
+            # Log configuration change
+            warnings.warn(
+                f"Logger reconfigured. New config ID: {new_config.get('uniqueid')}", 
+                LoggerConfigurationWarning
+            )
+        
+        except ConfigValidationError as e:
+            warnings.warn(
+                f"Failed to apply new configuration: {e}", 
+                LoggerConfigurationWarning
+            )
+    
     try:
+        # Create a config manager with change handling
+        from .config_manager import ConfigManager
+        config_manager = ConfigManager(config_path, on_config_change=handle_config_change)
+        
         # Create and return the logger instance
         logger = SkyArcLogger(config_path)
         
-        # Set as global logger if no listeners were configured
-        if not logger._listeners:
-            warnings.warn(
-                "No listeners configured. Falling back to default logging.", 
-                LoggerConfigurationWarning
-            )
-            # Import console listener here to avoid circular imports
-            from .listeners import ConsoleListener
-            logger._listeners['console'] = ConsoleListener()
+        # Validate the configuration
+        validate_configuration(logger._config)
         
-        # Validate and adjust transformer configuration
-        from .transformers import TextTransformer
-        
-        for listener_name, listener in logger._listeners.items():
-            # Ensure each listener has a transformer
-            if not hasattr(listener, 'transformer') or listener.transformer is None:
-                # Use a default text transformer if none specified
-                listener.transformer = TextTransformer()
+        # Set as global logger
+        global _GLOBAL_LOGGER
+        _GLOBAL_LOGGER = logger
         
         return logger
+    
+    except ConfigValidationError as e:
+        # Raise configuration validation errors
+        raise ConfigValidationError(f"Invalid logging configuration: {e}") from e
+    
     except Exception as e:
         # Log the configuration error
         warnings.warn(f"Failed to configure logger: {e}", LoggerConfigurationWarning)

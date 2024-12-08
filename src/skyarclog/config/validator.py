@@ -1,7 +1,8 @@
 """Configuration validation utilities for SkyArcLog."""
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, Any
 import logging
+import uuid
 
 
 class ConfigValidationError(Exception):
@@ -206,3 +207,102 @@ def _get_handler_validator(handler_type: str):
         'azure-sql': _validate_azure_sql_handler
     }
     return validators.get(handler_type)
+
+
+def validate_configuration(config: Dict[str, Any]) -> None:
+    """
+    Comprehensive validation of the entire logging configuration.
+    
+    Args:
+        config: Full configuration dictionary
+    
+    Raises:
+        ConfigValidationError: If configuration is invalid
+    """
+    # Validate top-level configuration keys
+    required_keys = ['version', 'name', 'uniqueid']
+    for key in required_keys:
+        if key not in config:
+            raise ConfigValidationError(f"Missing required configuration key: {key}")
+    
+    # Validate version
+    if not isinstance(config['version'], (float, int)) or config['version'] < 1.0:
+        raise ConfigValidationError("Invalid configuration version. Must be a number >= 1.0")
+    
+    # Validate unique ID
+    uniqueid = config['uniqueid']
+    try:
+        # Attempt to validate UUID
+        uuid.UUID(str(uniqueid))
+    except (ValueError, TypeError):
+        raise ConfigValidationError("Invalid uniqueid. Must be a valid UUID.")
+    
+    # Validate listeners
+    listeners = config.get('listeners', {})
+    if not isinstance(listeners, dict):
+        raise ConfigValidationError("'listeners' must be a dictionary")
+    
+    for listener_name, listener_config in listeners.items():
+        # Validate listener configuration
+        if not isinstance(listener_config, dict):
+            raise ConfigValidationError(f"Listener '{listener_name}' configuration must be a dictionary")
+        
+        # Check for required listener fields
+        if 'type' not in listener_config:
+            raise ConfigValidationError(f"Listener '{listener_name}' must specify a 'type'")
+        
+        # Validate formatter configuration
+        formatter = listener_config.get('formatter', {})
+        if not isinstance(formatter, dict):
+            raise ConfigValidationError(f"Formatter for listener '{listener_name}' must be a dictionary")
+        
+        formatter_type = formatter.get('type', 'text')
+        if formatter_type not in ['json', 'text']:
+            raise ConfigValidationError(f"Invalid formatter type '{formatter_type}' for listener '{listener_name}'. Must be 'json' or 'text'")
+        
+        # If JSON formatter is specified, ensure additional JSON-specific validations
+        if formatter_type == 'json':
+            if not _validate_json_formatter(formatter):
+                raise ConfigValidationError(f"Invalid JSON formatter configuration for listener '{listener_name}'")
+    
+    # Validate transformers
+    transformers = config.get('transformers', {})
+    if not isinstance(transformers, dict):
+        raise ConfigValidationError("'transformers' must be a dictionary")
+    
+    for transformer_name, transformer_config in transformers.items():
+        if not isinstance(transformer_config, dict):
+            raise ConfigValidationError(f"Transformer '{transformer_name}' configuration must be a dictionary")
+
+
+def _validate_json_formatter(formatter: Dict[str, Any]) -> bool:
+    """
+    Validate JSON formatter-specific configuration.
+    
+    Args:
+        formatter: Formatter configuration dictionary
+    
+    Returns:
+        bool: Whether the configuration is valid
+    """
+    # Optional JSON-specific validations
+    if 'indent' in formatter:
+        indent = formatter['indent']
+        if not isinstance(indent, int) or indent < 0:
+            return False
+    
+    if 'sort_keys' in formatter:
+        if not isinstance(formatter['sort_keys'], bool):
+            return False
+    
+    return True
+
+
+def generate_unique_config_id() -> str:
+    """
+    Generate a unique identifier for a configuration.
+    
+    Returns:
+        str: A unique UUID as a string
+    """
+    return str(uuid.uuid4())

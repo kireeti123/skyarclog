@@ -3,9 +3,13 @@
 import json
 import os
 import logging
-from typing import Any, Dict, Optional, Union
+import threading
+import time
+import uuid
+from typing import Any, Dict, Optional, Union, Callable
 from pathlib import Path
 from dotenv import load_dotenv
+from .config.validator import validate_configuration, generate_unique_config_id, ConfigValidationError
 
 # Optional Azure imports
 try:
@@ -24,6 +28,7 @@ class ConfigManager:
     DEFAULT_CONFIG = {
         "version": 1.0,
         "name": "SkyArcLog Default App",
+        "uniqueid": generate_unique_config_id(),
         "transformers": {},
         "listeners": {
             "console": {
@@ -47,11 +52,14 @@ class ConfigManager:
         }
     }
 
-    def __init__(self, config_path: Optional[str] = None):
-        """Initialize configuration manager.
+    def __init__(self, config_path: Optional[str] = None, 
+                 on_config_change: Optional[Callable[[Dict[str, Any]], None]] = None):
+        """
+        Initialize configuration manager with dynamic reloading and change tracking.
         
         Args:
             config_path: Optional path to configuration file
+            on_config_change: Optional callback function when configuration changes
         """
         # Use default configuration if no path is provided
         if config_path is None:
@@ -60,8 +68,24 @@ class ConfigManager:
         # Ensure config_path is a Path object
         self.config_path = Path(config_path)
         
-        # Load configuration
-        self.config = self._load_config()
+        # Configuration state
+        self._config: Dict[str, Any] = {}
+        self._last_modified: float = 0
+        self._last_config_id: Optional[str] = None
+        self._lock = threading.Lock()
+        
+        # Configuration change callback
+        self._on_config_change = on_config_change
+        
+        # Configuration reload settings
+        self._auto_reload_enabled = True
+        self._reload_interval = 5.0  # seconds
+        
+        # Load initial configuration
+        self._load_config()
+        
+        # Start configuration monitoring thread
+        self._start_config_monitor()
         
         # Load environment variables
         load_dotenv()
@@ -73,30 +97,125 @@ class ConfigManager:
         self._secrets_cache: Dict[str, str] = {}
 
     def _load_config(self) -> Dict[str, Any]:
-        """Load configuration from file or use default.
+        """
+        Load configuration from file, with error handling and default fallback.
         
         Returns:
             Loaded configuration dictionary
         """
         try:
-            # Try to load from specified path
-            if self.config_path.exists():
+            # Check if configuration file exists
+            if not self.config_path.exists():
+                raise FileNotFoundError(f"Configuration file not found: {self.config_path}")
+            
+            # Get last modified time
+            current_modified = os.path.getmtime(self.config_path)
+            
+            # Only reload if file has changed
+            if current_modified > self._last_modified:
                 with open(self.config_path, 'r') as f:
-                    return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            logging.warning(f"Could not load config from {self.config_path}: {e}")
+                    new_config = json.load(f)
+                
+                try:
+                    # Validate configuration
+                    validate_configuration(new_config)
+                    
+                    # Thread-safe config update
+                    with self._lock:
+                        # Check if configuration ID has changed
+                        current_config_id = new_config.get('uniqueid')
+                        
+                        if current_config_id != self._last_config_id:
+                            # Configuration has meaningfully changed
+                            print(f"Configuration changed. New ID: {current_config_id}")
+                            
+                            # Call change callback if provided
+                            if self._on_config_change:
+                                try:
+                                    self._on_config_change(new_config)
+                                except Exception as callback_error:
+                                    print(f"Error in configuration change callback: {callback_error}")
+                            
+                            # Update last config ID
+                            self._last_config_id = current_config_id
+                        
+                        # Update configuration
+                        self._config = new_config
+                        self._last_modified = current_modified
+                    
+                    # Optional: Log configuration reload
+                    print(f"Configuration reloaded from {self.config_path}")
+                
+                except ConfigValidationError as validation_error:
+                    print(f"Configuration validation failed: {validation_error}")
+                    return self.DEFAULT_CONFIG
+            
+            return self._config
         
-        # Return default configuration if loading fails
-        return self.DEFAULT_CONFIG
-
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            # Log error and return default configuration
+            print(f"Error loading configuration: {e}")
+            return self.DEFAULT_CONFIG
+    
+    def _start_config_monitor(self):
+        """
+        Start a background thread to monitor configuration file for changes.
+        """
+        def monitor_config():
+            while self._auto_reload_enabled:
+                try:
+                    self._load_config()
+                except Exception as e:
+                    print(f"Configuration monitoring error: {e}")
+                
+                # Sleep between checks
+                time.sleep(self._reload_interval)
+        
+        # Start monitoring thread as a daemon
+        monitor_thread = threading.Thread(target=monitor_config, daemon=True)
+        monitor_thread.start()
+    
     def get_config(self) -> Dict[str, Any]:
-        """Get the current configuration.
+        """
+        Get the current configuration, ensuring thread safety.
         
         Returns:
             Current configuration dictionary
         """
-        return self.config
-
+        with self._lock:
+            return self._config.copy()
+    
+    def reload_config(self):
+        """
+        Manually trigger configuration reload.
+        """
+        self._load_config()
+    
+    def set_reload_interval(self, interval: float):
+        """
+        Set the configuration reload interval.
+        
+        Args:
+            interval: Reload interval in seconds
+        """
+        if interval < 1.0:
+            raise ValueError("Reload interval must be at least 1 second")
+        
+        self._reload_interval = interval
+    
+    def disable_auto_reload(self):
+        """
+        Disable automatic configuration reloading.
+        """
+        self._auto_reload_enabled = False
+    
+    def enable_auto_reload(self):
+        """
+        Enable automatic configuration reloading.
+        """
+        self._auto_reload_enabled = True
+        self._start_config_monitor()
+    
     def _initialize_keyvault_client(self) -> Optional[SecretClient]:
         """Initialize Azure Key Vault client using credentials from environment."""
         if not AZURE_AVAILABLE:
@@ -204,6 +323,33 @@ class ConfigManager:
         
         secret_name = f"{service_name.upper()}-CONNECTION-STRING"
         return self.get_secret(secret_name, "")
+
+    def create_default_config_file(self):
+        """
+        Create a default configuration file if it doesn't exist.
+        """
+        if not self.config_path.exists():
+            default_config = self.DEFAULT_CONFIG.copy()
+            default_config['uniqueid'] = generate_unique_config_id()
+            
+            with open(self.config_path, 'w') as f:
+                json.dump(default_config, f, indent=4)
+            
+            print(f"Created default configuration file at {self.config_path}")
+    
+    def update_config_id(self):
+        """
+        Manually update the configuration's unique ID.
+        """
+        with self._lock:
+            if 'uniqueid' in self._config:
+                self._config['uniqueid'] = generate_unique_config_id()
+                
+                # Write updated configuration back to file
+                with open(self.config_path, 'w') as f:
+                    json.dump(self._config, f, indent=4)
+                
+                print("Configuration ID updated")
 
     def __enter__(self):
         """Context manager entry."""
