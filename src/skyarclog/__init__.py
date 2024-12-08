@@ -4,6 +4,11 @@
 __all__ = [
     'log', 
     'configure', 
+    'debug',
+    'info', 
+    'warning',
+    'error',
+    'critical',
     'logger', 
     'config', 
     'core'
@@ -25,6 +30,21 @@ def __getattr__(name):
     elif name == 'configure':
         from .logger import configure
         return configure
+    elif name == 'debug':
+        from .logger import debug
+        return debug
+    elif name == 'info':
+        from .logger import info
+        return info
+    elif name == 'warning':
+        from .logger import warning
+        return warning
+    elif name == 'error':
+        from .logger import error
+        return error
+    elif name == 'critical':
+        from .logger import critical
+        return critical
     elif name == 'logger':
         from . import logger
         return logger

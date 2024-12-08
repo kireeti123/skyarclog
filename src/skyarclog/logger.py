@@ -111,6 +111,26 @@ class SkyArcLogger:
         for listener in self._listeners.values():
             listener.log(numeric_level, message, **kwargs)
 
+    def debug(self, message: str, **kwargs) -> None:
+        """Log a debug message."""
+        self.log('DEBUG', message, **kwargs)
+
+    def info(self, message: str, **kwargs) -> None:
+        """Log an info message."""
+        self.log('INFO', message, **kwargs)
+
+    def warning(self, message: str, **kwargs) -> None:
+        """Log a warning message."""
+        self.log('WARNING', message, **kwargs)
+
+    def error(self, message: str, **kwargs) -> None:
+        """Log an error message."""
+        self.log('ERROR', message, **kwargs)
+
+    def critical(self, message: str, **kwargs) -> None:
+        """Log a critical message."""
+        self.log('CRITICAL', message, **kwargs)
+
     def close(self):
         """Close all listeners and flush any buffered logs."""
         for listener in self._listeners.values():
@@ -128,6 +148,26 @@ def log(level: str, message: str, **kwargs) -> None:
     # Create a logger with a default configuration
     logger = SkyArcLogger(config_path=None)
     logger.log(level, message, **kwargs)
+
+def debug(message: str, **kwargs) -> None:
+    """Log a debug message."""
+    log('DEBUG', message, **kwargs)
+
+def info(message: str, **kwargs) -> None:
+    """Log an info message."""
+    log('INFO', message, **kwargs)
+
+def warning(message: str, **kwargs) -> None:
+    """Log a warning message."""
+    log('WARNING', message, **kwargs)
+
+def error(message: str, **kwargs) -> None:
+    """Log an error message."""
+    log('ERROR', message, **kwargs)
+
+def critical(message: str, **kwargs) -> None:
+    """Log a critical message."""
+    log('CRITICAL', message, **kwargs)
 
 def configure(config_path: Optional[str] = None) -> None:
     """
