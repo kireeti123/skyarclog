@@ -2,99 +2,66 @@
 
 import importlib
 import warnings
+import logging
 
 # Global logger configuration
 __all__ = [
-    'log', 
-    'configure', 
-    'debug',
-    'info', 
-    'warning',
-    'error',
-    'critical',
-    'logger', 
-    'config', 
-    'core'
+    'log'
 ]
 
 # Global logger instance
 _GLOBAL_LOGGER = None
 
-# Import logger module to ensure all functions are available
-from .logger import (
-    log, 
-    debug, 
-    info, 
-    warning, 
-    error, 
-    critical, 
-    SkyArcLogger
-)
-
-# Explicitly import configure to avoid circular import issues
-from .logger import configure as _configure
-
-def configure(config_path=None):
+class Log:
     """
-    Wrapper for logger configuration to handle potential import issues.
-    
-    Args:
-        config_path: Optional path to configuration file
-    
-    Returns:
-        Configured SkyArcLogger instance
+    A wrapper class to provide intuitive logging methods.
+    Allows logging using methods like log.debug(), log.info(), etc.
     """
-    global _GLOBAL_LOGGER
-    try:
-        _GLOBAL_LOGGER = _configure(config_path)
-        return _GLOBAL_LOGGER
-    except Exception as e:
-        warnings.warn(f"Failed to configure logger: {e}", RuntimeWarning)
-        # Fallback to default logger
-        _GLOBAL_LOGGER = SkyArcLogger()
-        return _GLOBAL_LOGGER
+    def __init__(self):
+        self._logger = None
 
-def __getattr__(name):
-    """
-    Lazily import modules to prevent circular imports.
-    
-    Args:
-        name: Name of the attribute to import
-    
-    Returns:
-        Imported module or function
-    """
-    global _GLOBAL_LOGGER
+    def _ensure_logger(self):
+        """Ensure a global logger is created."""
+        if self._logger is None:
+            # Use Python's built-in logging as a fallback
+            self._logger = logging.getLogger(__name__)
+            self._logger.setLevel(logging.DEBUG)
+            
+            # Add a console handler if no handlers exist
+            if not self._logger.handlers:
+                console_handler = logging.StreamHandler()
+                console_handler.setLevel(logging.DEBUG)
+                formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                console_handler.setFormatter(formatter)
+                self._logger.addHandler(console_handler)
 
-    if name == 'log':
-        return log
-    elif name == 'configure':
-        return configure
-    elif name in ['debug', 'info', 'warning', 'error', 'critical']:
-        # Ensure we have a global logger
-        if _GLOBAL_LOGGER is None:
-            _GLOBAL_LOGGER = configure()
-        
-        # Map the function to use the global logger
-        func_map = {
-            'debug': debug,
-            'info': info,
-            'warning': warning,
-            'error': error,
-            'critical': critical
-        }
-        return func_map[name]
-    elif name == 'logger':
-        from . import logger
-        return logger
-    elif name == 'config':
-        from . import config_manager as config
-        return config
-    elif name == 'core':
-        from . import core
-        return core
-    
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    def debug(self, message: str, **kwargs):
+        """Log a debug message."""
+        self._ensure_logger()
+        self._logger.debug(message, extra=kwargs)
+
+    def info(self, message: str, **kwargs):
+        """Log an info message."""
+        self._ensure_logger()
+        self._logger.info(message, extra=kwargs)
+
+    def warning(self, message: str, **kwargs):
+        """Log a warning message."""
+        self._ensure_logger()
+        self._logger.warning(message, extra=kwargs)
+
+    def error(self, message: str, **kwargs):
+        """Log an error message."""
+        self._ensure_logger()
+        self._logger.error(message, extra=kwargs)
+
+    def critical(self, message: str, **kwargs):
+        """Log a critical message."""
+        self._ensure_logger()
+        self._logger.critical(message, extra=kwargs)
+
+# Create a global log instance
+log = Log()
 
 # Prevent further imports during initialization
 __import__ = None
