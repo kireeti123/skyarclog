@@ -219,10 +219,11 @@ def configure(config_path: Optional[str] = None) -> SkyArcLogger:
             _GLOBAL_LOGGER = logger
             
             # Log configuration change
-            warnings.warn(
-                f"Logger reconfigured. New config ID: {new_config.get('uniqueid')}", 
-                LoggerConfigurationWarning
-            )
+            if new_config:
+                warnings.warn(
+                    f"Logger reconfigured.", 
+                    LoggerConfigurationWarning
+                )
         
         except ConfigValidationError as e:
             warnings.warn(

@@ -1,8 +1,0 @@
-{
-    "loggers": {
-        "root": {
-            "level": "WARNING",
-            "handlers": ["console", "azure-blob"]
-        }
-    }
-}

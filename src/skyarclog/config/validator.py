@@ -2,7 +2,6 @@
 
 from typing import Dict, Any
 import logging
-import uuid
 
 
 class ConfigValidationError(Exception):
@@ -220,7 +219,7 @@ def validate_configuration(config: Dict[str, Any]) -> None:
         ConfigValidationError: If configuration is invalid
     """
     # Validate top-level configuration keys
-    required_keys = ['version', 'name', 'uniqueid']
+    required_keys = ['version', 'name']
     for key in required_keys:
         if key not in config:
             raise ConfigValidationError(f"Missing required configuration key: {key}")
@@ -228,14 +227,6 @@ def validate_configuration(config: Dict[str, Any]) -> None:
     # Validate version
     if not isinstance(config['version'], (float, int)) or config['version'] < 1.0:
         raise ConfigValidationError("Invalid configuration version. Must be a number >= 1.0")
-    
-    # Validate unique ID
-    uniqueid = config['uniqueid']
-    try:
-        # Attempt to validate UUID
-        uuid.UUID(str(uniqueid))
-    except (ValueError, TypeError):
-        raise ConfigValidationError("Invalid uniqueid. Must be a valid UUID.")
     
     # Validate listeners
     listeners = config.get('listeners', {})
@@ -296,13 +287,3 @@ def _validate_json_formatter(formatter: Dict[str, Any]) -> bool:
             return False
     
     return True
-
-
-def generate_unique_config_id() -> str:
-    """
-    Generate a unique identifier for a configuration.
-    
-    Returns:
-        str: A unique UUID as a string
-    """
-    return str(uuid.uuid4())

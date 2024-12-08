@@ -9,7 +9,7 @@ import uuid
 from typing import Any, Dict, Optional, Union, Callable
 from pathlib import Path
 from dotenv import load_dotenv
-from .config.validator import validate_configuration, generate_unique_config_id, ConfigValidationError
+from .config.validator import validate_configuration, ConfigValidationError
 
 # Optional Azure imports
 try:
@@ -28,7 +28,6 @@ class ConfigManager:
     DEFAULT_CONFIG = {
         "version": 1.0,
         "name": "SkyArcLog Default App",
-        "uniqueid": generate_unique_config_id(),
         "transformers": {},
         "listeners": {
             "console": {
@@ -48,6 +47,12 @@ class ConfigManager:
                 "show_level": True,
                 "show_thread": False,
                 "show_process": False
+            }
+        },
+        "loggers": {
+            "root": {
+                "level": "INFO",
+                "handlers": ["console"]
             }
         }
     }
@@ -71,7 +76,6 @@ class ConfigManager:
         # Configuration state
         self._config: Dict[str, Any] = {}
         self._last_modified: float = 0
-        self._last_config_id: Optional[str] = None
         self._lock = threading.Lock()
         
         # Configuration change callback
@@ -122,23 +126,6 @@ class ConfigManager:
                     
                     # Thread-safe config update
                     with self._lock:
-                        # Check if configuration ID has changed
-                        current_config_id = new_config.get('uniqueid')
-                        
-                        if current_config_id != self._last_config_id:
-                            # Configuration has meaningfully changed
-                            print(f"Configuration changed. New ID: {current_config_id}")
-                            
-                            # Call change callback if provided
-                            if self._on_config_change:
-                                try:
-                                    self._on_config_change(new_config)
-                                except Exception as callback_error:
-                                    print(f"Error in configuration change callback: {callback_error}")
-                            
-                            # Update last config ID
-                            self._last_config_id = current_config_id
-                        
                         # Update configuration
                         self._config = new_config
                         self._last_modified = current_modified
@@ -330,27 +317,12 @@ class ConfigManager:
         """
         if not self.config_path.exists():
             default_config = self.DEFAULT_CONFIG.copy()
-            default_config['uniqueid'] = generate_unique_config_id()
             
             with open(self.config_path, 'w') as f:
                 json.dump(default_config, f, indent=4)
             
             print(f"Created default configuration file at {self.config_path}")
     
-    def update_config_id(self):
-        """
-        Manually update the configuration's unique ID.
-        """
-        with self._lock:
-            if 'uniqueid' in self._config:
-                self._config['uniqueid'] = generate_unique_config_id()
-                
-                # Write updated configuration back to file
-                with open(self.config_path, 'w') as f:
-                    json.dump(self._config, f, indent=4)
-                
-                print("Configuration ID updated")
-
     def __enter__(self):
         """Context manager entry."""
         return self
