@@ -5,24 +5,28 @@ from datetime import datetime
 import json
 from .base_transformer import BaseTransformer
 
-
 class SqlTransformer(BaseTransformer):
-    """Transforms log messages into SQL-friendly format."""
+    """Transformer that converts log messages to SQL-friendly format."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """Initialize SQL transformer.
+    def __init__(self):
+        """Initialize SQL transformer."""
+        self._date_format = '%Y-%m-%d %H:%M:%S.%f'
+        self._max_field_length = 4000
+        self._custom_mappings = {}
+
+    def configure(self, date_format: str = '%Y-%m-%d %H:%M:%S.%f', 
+                  max_field_length: int = 4000, 
+                  custom_mappings: Optional[Dict[str, str]] = None) -> None:
+        """Configure the transformer.
         
         Args:
-            config: Optional configuration with:
-                - date_format: Format for datetime fields
-                - max_field_length: Maximum length for text fields
-                - custom_mappings: Field name mappings
+            date_format: Format for datetime fields (default: '%Y-%m-%d %H:%M:%S.%f')
+            max_field_length: Maximum length for text fields (default: 4000)
+            custom_mappings: Field name mappings (default: None)
         """
-        super().__init__()
-        self._config = config or {}
-        self._date_format = self._config.get('date_format', '%Y-%m-%d %H:%M:%S.%f')
-        self._max_field_length = self._config.get('max_field_length', 4000)
-        self._custom_mappings = self._config.get('custom_mappings', {})
+        self._date_format = date_format
+        self._max_field_length = max_field_length
+        self._custom_mappings = custom_mappings or {}
 
     def transform(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Transform log message to SQL-friendly format.
@@ -32,10 +36,10 @@ class SqlTransformer(BaseTransformer):
             
         Returns:
             SQL-friendly dictionary with:
-                - All dates as formatted strings
-                - JSON for nested structures
-                - Truncated text fields
-                - Mapped field names
+            - All dates as formatted strings
+            - JSON for nested structures
+            - Truncated text fields
+            - Mapped field names
         """
         sql_message = {}
         

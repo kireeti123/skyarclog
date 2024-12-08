@@ -1,0 +1,51 @@
+{
+    "version": 1.0,
+    "name": "Client App 1",
+    "transformers": {
+        "json": {
+            "indent": 2,
+            "sort_keys": true
+        },
+        "sql": {
+            "date_format": "%Y-%m-%d %H:%M:%S.%f",
+            "max_field_length": 4000
+        },
+        "protobuf": {
+            "preserve_proto_field_names": true,
+            "message_type": "LogMessage"
+        }
+    },
+    "listeners": {
+        "console": {
+            "enabled": true,
+            "format": "json",
+            "colors": {
+                "enabled": true,
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bold"
+            },
+            "output": "stdout",
+            "show_timestamp": true,
+            "timestamp_format": "%Y-%m-%d %H:%M:%S.%f",
+            "show_level": true,
+            "show_thread": true,
+            "show_process": true
+        }
+    },
+    "loggers": {
+        "root": {
+            "level": "WARNING",
+            "handlers": ["console"]
+        }
+    },
+    "security": {
+        "encryption": {
+            "enabled": false,
+            "algorithm": "AES",
+            "key_rotation_interval": 86400
+        }
+    }
+}

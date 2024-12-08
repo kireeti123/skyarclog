@@ -31,7 +31,7 @@ class ConsoleListener(BaseListener):
         self._show_process = True
         self._output = sys.stdout
 
-    def initialize(self, name: str, config: Dict[str, Any]) -> None:
+    def initialize(self, name, config):
         """Initialize the listener with configuration.
         
         Args:
@@ -76,7 +76,7 @@ class ConsoleListener(BaseListener):
             transformer = create_transformer(format_name, transformer_config)
             self._transformers = [transformer]
 
-    def get_transformer_config(self, format_name: str) -> Dict[str, Any]:
+    def get_transformer_config(self, format_name):
         """Get transformer configuration from global transformers section.
         
         Args:
@@ -90,7 +90,7 @@ class ConsoleListener(BaseListener):
         transformer_entry = transformers_config.get(format_name, {})
         return transformer_entry.get('config', {})
 
-    def _get_color(self, level: str) -> str:
+    def _get_color(self, level):
         """Get the color code for a log level.
         
         Args:
@@ -111,7 +111,7 @@ class ConsoleListener(BaseListener):
         style = Style.BRIGHT if 'bold' in parts else ''
         return color + style
 
-    def handle(self, message: Dict[str, Any]) -> None:
+    def handle(self, message):
         """Handle a log message.
         
         Args:
@@ -165,7 +165,7 @@ class ConsoleListener(BaseListener):
         print(f"{color}{output}{reset}", file=self._output)
         self._output.flush()
 
-    def log(self, level: str, message: str, **kwargs) -> None:
+    def log(self, level, message, **kwargs):
         """
         Log a message with the specified level.
         
@@ -184,10 +184,10 @@ class ConsoleListener(BaseListener):
         # Use the existing handle method
         self.handle(log_message)
 
-    def flush(self) -> None:
+    def flush(self):
         """Flush the output stream."""
         self._output.flush()
 
-    def close(self) -> None:
+    def close(self):
         """Clean up resources."""
         self.flush()

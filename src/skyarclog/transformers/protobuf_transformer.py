@@ -7,24 +7,29 @@ from google.protobuf import json_format
 from google.protobuf.timestamp_pb2 import Timestamp
 from .base_transformer import BaseTransformer
 
-
 class ProtobufTransformer(BaseTransformer):
-    """Transforms log messages into Protocol Buffers format."""
+    """Transformer that converts log messages to Protocol Buffers format."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """Initialize Protobuf transformer.
+    def __init__(self):
+        """Initialize Protobuf transformer."""
+        self._proto_module = None
+        self._message_type = 'LogMessage'
+        self._preserve_names = True
+
+    def configure(self, 
+                  proto_module: Optional[Any] = None, 
+                  message_type: str = 'LogMessage', 
+                  preserve_proto_field_names: bool = True) -> None:
+        """Configure the transformer.
         
         Args:
-            config: Optional configuration with:
-                - proto_module: Custom protobuf module
-                - message_type: Proto message type name
-                - preserve_proto_field_names: Keep proto field names
+            proto_module: Custom protobuf module (default: None)
+            message_type: Proto message type name (default: 'LogMessage')
+            preserve_proto_field_names: Keep proto field names (default: True)
         """
-        super().__init__()
-        self._config = config or {}
-        self._proto_module = self._config.get('proto_module')
-        self._message_type = self._config.get('message_type', 'LogMessage')
-        self._preserve_names = self._config.get('preserve_proto_field_names', True)
+        self._proto_module = proto_module
+        self._message_type = message_type
+        self._preserve_names = preserve_proto_field_names
 
     def transform(self, message: Dict[str, Any]) -> bytes:
         """Transform log message to Protocol Buffers format.

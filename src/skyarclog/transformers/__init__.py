@@ -3,7 +3,8 @@
 from typing import Dict, Type
 from .base_transformer import BaseTransformer
 from .json_transformer import JsonTransformer
-from .text_transformer import TextTransformer
+from .sql_transformer import SqlTransformer
+from .protobuf_transformer import ProtobufTransformer
 
 # Global registry of transformers
 _transformers: Dict[str, Type[BaseTransformer]] = {}
@@ -50,7 +51,8 @@ def create_transformer(name: str, config: dict) -> BaseTransformer:
 
 # Register built-in transformers
 register_transformer('json', JsonTransformer)
-register_transformer('text', TextTransformer)
+register_transformer('sql', SqlTransformer)
+register_transformer('protobuf', ProtobufTransformer)
 
 # Export key functions and classes
 __all__ = [
@@ -59,5 +61,6 @@ __all__ = [
     'create_transformer', 
     'BaseTransformer',
     'JsonTransformer',
-    'TextTransformer'
+    'SqlTransformer',
+    'ProtobufTransformer'
 ]

@@ -120,38 +120,90 @@ class PluginManager:
         """Create a listener instance by name.
         
         Args:
-            name: Name of the listener
+            name: Name of the listener key in configuration
             config: Listener configuration
             
         Returns:
             Listener instance if successful, None otherwise
         """
-        listener_class = self.get_listener(name)
-        if listener_class:
-            try:
+        try:
+            # Map listener names to their corresponding class names
+            listener_type_map = {
+                'console': 'console',
+                'file': 'file',
+                'network': 'network',
+                # Add more mappings as needed
+            }
+            
+            # Get the listener type based on the name
+            type_name = listener_type_map.get(name)
+            
+            if not type_name:
+                logger.warning(f"No listener mapping found for '{name}'")
+                return None
+            
+            # Attempt to get the listener class
+            listener_class = self.get_listener(type_name)
+            
+            if listener_class:
+                # Create listener instance
                 listener = listener_class()
+                
+                # Initialize the listener with its name and configuration
                 listener.initialize(name, config)
+                
                 return listener
-            except Exception as e:
-                logger.error(f"Error creating listener '{name}': {str(e)}")
-        return None
+            
+            # If no listener found, log a warning
+            logger.warning(f"No listener found for type '{type_name}'")
+            return None
+        
+        except Exception as e:
+            logger.error(f"Error creating listener '{name}': {str(e)}")
+            return None
 
     def create_transformer(self, name: str, config: Dict[str, Any]) -> Optional[BaseTransformer]:
         """Create a transformer instance by name.
         
         Args:
-            name: Name of the transformer
+            name: Name of the transformer key in configuration
             config: Transformer configuration
             
         Returns:
             Transformer instance if successful, None otherwise
         """
-        transformer_class = self.get_transformer(name)
-        if transformer_class:
-            try:
+        try:
+            # Map transformer names to their corresponding class names
+            transformer_type_map = {
+                'json': 'json',
+                'sql': 'sql',
+                'protobuf': 'protobuf',
+                # Add more mappings as needed
+            }
+            
+            # Get the transformer type based on the name
+            type_name = transformer_type_map.get(name)
+            
+            if not type_name:
+                logger.warning(f"No transformer mapping found for '{name}'")
+                return None
+            
+            # Attempt to get the transformer class
+            transformer_class = self.get_transformer(type_name)
+            
+            if transformer_class:
+                # Create transformer instance
                 transformer = transformer_class()
+                
+                # Configure the transformer with the provided config
                 transformer.configure(config)
+                
                 return transformer
-            except Exception as e:
-                logger.error(f"Error creating transformer '{name}': {str(e)}")
-        return None
+            
+            # If no transformer found, log a warning
+            logger.warning(f"No transformer found for type '{type_name}'")
+            return None
+        
+        except Exception as e:
+            logger.error(f"Error creating transformer '{name}': {str(e)}")
+            return None

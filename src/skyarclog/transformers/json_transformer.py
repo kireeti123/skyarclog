@@ -6,23 +6,22 @@ from .base_transformer import BaseTransformer
 
 
 class JsonTransformer(BaseTransformer):
-    """Transformer that formats messages as JSON."""
+    """JSON message formatter."""
 
     def __init__(self):
         """Initialize the JSON transformer."""
         self.indent = None
         self.sort_keys = False
 
-    def configure(self, config: Dict[str, Any]) -> None:
+    def configure(self, indent: int = None, sort_keys: bool = False) -> None:
         """Configure the transformer.
         
         Args:
-            config: Configuration dictionary containing:
-                - indent: Number of spaces for indentation (default: None)
-                - sort_keys: Whether to sort dictionary keys (default: False)
+            indent: Number of spaces for indentation (default: None)
+            sort_keys: Whether to sort dictionary keys (default: False)
         """
-        self.indent = config.get('indent')
-        self.sort_keys = config.get('sort_keys', False)
+        self.indent = indent
+        self.sort_keys = sort_keys
 
     def transform(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Transform a log message to JSON format.
