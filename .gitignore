@@ -1,0 +1,71 @@
+# Python-specific ignores
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+ENV/
+
+# IDE-specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Logging and temporary files
+*.log
+*.tmp
+.logs/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Coverage and testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Mypy cache
+.mypy_cache/
+
+# Configuration files with sensitive information
+*.env
+*.secret
+
+# Compiled files
+*.pyc
+*.pyo
+*.pyd
+
+# Project-specific ignores
+config/*.secret
+logs/
+.skyarclog_cache/
+
+# Dependency management
+poetry.lock
+Pipfile.lock
+
+# Backup files
+*.bak
+*~
+
+# Temporary development files
+TODO.md
+NOTES.md
+.dev/

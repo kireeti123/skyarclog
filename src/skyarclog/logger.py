@@ -179,10 +179,13 @@ def configure(config_path: Optional[str] = None) -> SkyArcLogger:
     Returns:
         Configured SkyArcLogger instance
     """
+    # Import Path here to avoid potential circular imports
+    from pathlib import Path
+    
     # Ensure the config path is an absolute path if it's a relative path
-    if config_path and not Path(config_path).is_absolute():
-        # Convert relative path to absolute path from the current working directory
-        config_path = str(Path.cwd() / config_path)
+    if config_path:
+        # Convert to absolute path, handling both relative and absolute paths
+        config_path = str(Path(config_path).resolve())
     
     try:
         # Create and return the logger instance
@@ -194,11 +197,31 @@ def configure(config_path: Optional[str] = None) -> SkyArcLogger:
                 "No listeners configured. Falling back to default logging.", 
                 LoggerConfigurationWarning
             )
+            # Import console listener here to avoid circular imports
+            from .listeners import ConsoleListener
+            logger._listeners['console'] = ConsoleListener()
+        
+        # Validate and adjust transformer configuration
+        from .transformers import TextTransformer
+        
+        for listener_name, listener in logger._listeners.items():
+            # Ensure each listener has a transformer
+            if not hasattr(listener, 'transformer') or listener.transformer is None:
+                # Use a default text transformer if none specified
+                listener.transformer = TextTransformer()
         
         return logger
     except Exception as e:
         # Log the configuration error
         warnings.warn(f"Failed to configure logger: {e}", LoggerConfigurationWarning)
         
-        # Return a default logger with no specific configuration
-        return SkyArcLogger()
+        # Return a default logger with a console listener
+        from .listeners import ConsoleListener
+        from .transformers import TextTransformer
+        
+        default_logger = SkyArcLogger()
+        console_listener = ConsoleListener()
+        console_listener.transformer = TextTransformer()
+        default_logger._listeners['console'] = console_listener
+        
+        return default_logger

@@ -44,7 +44,7 @@ class BaseListener(ABC):
         """
         self._transformers.append(transformer)
 
-    def _apply_transformers(self, message: Dict[str, Any]) -> Dict[str, Any]:
+    def _apply_transformers(self, message: Any) -> Dict[str, Any]:
         """Apply all registered transformers to the message.
         
         Args:
@@ -53,11 +53,20 @@ class BaseListener(ABC):
         Returns:
             Transformed message
         """
+        # Ensure message is a dictionary
+        if not isinstance(message, dict):
+            message = {'message': str(message)}
+        
         transformed_message = message.copy()
         
         # Apply all transformers
         for transformer in self._transformers:
-            transformed_message = transformer.transform(transformed_message)
+            # Ensure transformer returns a dictionary
+            result = transformer.transform(transformed_message)
+            if isinstance(result, dict):
+                transformed_message = result
+            else:
+                transformed_message['message'] = str(result)
         
         # Ensure application name is added if not present
         if 'application' not in transformed_message:

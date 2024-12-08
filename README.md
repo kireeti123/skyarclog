@@ -182,7 +182,39 @@ You can extend the framework by creating custom listeners that implement the `Ba
 
 ## Contributing
 
-Contributions are welcome! Please submit pull requests or open issues on the GitHub repository.
+### Getting Started
+1. Fork the repository
+2. Clone your fork
+3. Create a new branch for your feature or bugfix
+4. Make your changes
+5. Run tests
+6. Submit a pull request
+
+### Development Guidelines
+- Follow PEP 8 style guidelines
+- Write comprehensive tests for new features
+- Update documentation
+- Ensure all tests pass before submitting a PR
+
+### Reporting Issues
+- Use GitHub Issues
+- Provide a clear and descriptive title
+- Include steps to reproduce the issue
+- Share relevant code snippets or configuration
+
+## Repository Structure
+
+### `.gitignore`
+
+The project includes a comprehensive `.gitignore` file that covers:
+- Python-specific ignores
+- Distribution and packaging files
+- Virtual environments
+- IDE-specific files
+- Logging and temporary files
+- Operating system files
+- Testing and coverage files
+- Sensitive configuration files
 
 ## License
 
@@ -463,18 +495,6 @@ Example with Environment Variables:
     }
 }
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Contact
 

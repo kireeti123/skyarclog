@@ -1,6 +1,9 @@
 """SkyArcLog package."""
 
-# Use lazy imports to prevent circular dependencies
+import importlib
+import warnings
+
+# Global logger configuration
 __all__ = [
     'log', 
     'configure', 
@@ -17,6 +20,40 @@ __all__ = [
 # Global logger instance
 _GLOBAL_LOGGER = None
 
+# Import logger module to ensure all functions are available
+from .logger import (
+    log, 
+    debug, 
+    info, 
+    warning, 
+    error, 
+    critical, 
+    SkyArcLogger
+)
+
+# Explicitly import configure to avoid circular import issues
+from .logger import configure as _configure
+
+def configure(config_path=None):
+    """
+    Wrapper for logger configuration to handle potential import issues.
+    
+    Args:
+        config_path: Optional path to configuration file
+    
+    Returns:
+        Configured SkyArcLogger instance
+    """
+    global _GLOBAL_LOGGER
+    try:
+        _GLOBAL_LOGGER = _configure(config_path)
+        return _GLOBAL_LOGGER
+    except Exception as e:
+        warnings.warn(f"Failed to configure logger: {e}", RuntimeWarning)
+        # Fallback to default logger
+        _GLOBAL_LOGGER = SkyArcLogger()
+        return _GLOBAL_LOGGER
+
 def __getattr__(name):
     """
     Lazily import modules to prevent circular imports.
@@ -30,14 +67,10 @@ def __getattr__(name):
     global _GLOBAL_LOGGER
 
     if name == 'log':
-        from .logger import log
         return log
     elif name == 'configure':
-        from .logger import configure
         return configure
     elif name in ['debug', 'info', 'warning', 'error', 'critical']:
-        from .logger import debug, info, warning, error, critical
-        
         # Ensure we have a global logger
         if _GLOBAL_LOGGER is None:
             _GLOBAL_LOGGER = configure()

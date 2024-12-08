@@ -165,6 +165,25 @@ class ConsoleListener(BaseListener):
         print(f"{color}{output}{reset}", file=self._output)
         self._output.flush()
 
+    def log(self, level: str, message: str, **kwargs) -> None:
+        """
+        Log a message with the specified level.
+        
+        Args:
+            level: Log level (e.g., 'DEBUG', 'INFO')
+            message: Log message
+            **kwargs: Additional context information
+        """
+        # Prepare log message dictionary
+        log_message = {
+            'level': level,
+            'message': message,
+            **kwargs
+        }
+        
+        # Use the existing handle method
+        self.handle(log_message)
+
     def flush(self) -> None:
         """Flush the output stream."""
         self._output.flush()
