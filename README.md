@@ -16,37 +16,46 @@ SkyArcLog is a powerful, flexible, and extensible logging framework designed to 
 ## Installation
 
 ### Prerequisites
-
 - Python 3.8+
 - pip
+- setuptools >= 61.0
 
-### Install via pip
+### Install from GitHub
 
 ```bash
+# Basic installation
 pip install git+https://github.com/kireeti123/skyarclog.git
+
+# Install with specific features
+pip install git+https://github.com/kireeti123/skyarclog.git#egg=skyarclog[azure]
+pip install git+https://github.com/kireeti123/skyarclog.git#egg=skyarclog[sql]
+pip install git+https://github.com/kireeti123/skyarclog.git#egg=skyarclog[all]
 ```
 
-Or install with specific features:
+### Troubleshooting Installation
 
+If you encounter `ModuleNotFoundError: No module named 'pkg_resources'`:
+
+1. Upgrade pip and setuptools:
 ```bash
-# Install with Azure support
-pip install git+https://github.com/kireeti123/skyarclog.git#egg=skyarclog[azure]
+pip install --upgrade pip setuptools wheel
+```
 
-# Install with SQL support
-pip install git+https://github.com/kireeti123/skyarclog.git#egg=skyarclog[sql]
-
-# Install all features
-pip install git+https://github.com/kireeti123/skyarclog.git#egg=skyarclog[all]
+2. Ensure you have the latest version of the package:
+```bash
+pip install --upgrade git+https://github.com/kireeti123/skyarclog.git
 ```
 
 ### Development Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/skyarclog.git
-
-# Navigate to the project directory
+git clone https://github.com/kireeti123/skyarclog.git
 cd skyarclog
+
+# Create a virtual environment (recommended)
+python3 -m venv .venv
+source .venv/bin/activate
 
 # Install in editable mode
 pip install -e .

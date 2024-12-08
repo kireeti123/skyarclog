@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "skyarclog"
+version = "0.1.1"
+description = "A modular, cloud-agnostic logging framework"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+dependencies = [
+    "setuptools>=61.0.0",
+    "python-json-logger>=2.0.7",
+    "python-dotenv>=1.0.0",
+    "colorama>=0.4.6",
+    "packaging",
+]
+
+[project.optional-dependencies]
+azure = [
+    "azure-storage-blob>=12.0.0",
+    "opencensus-ext-azure>=1.1.9",
+    "opencensus-ext-logging>=0.1.0",
+    "azure-identity>=1.12.0",
+    "azure-keyvault-secrets>=4.7.0",
+]
+sql = [
+    "pyodbc>=4.0.39",
+]
+protobuf = [
+    "protobuf>=4.21.0",
+]
+all = [
+    "azure-storage-blob>=12.0.0",
+    "opencensus-ext-azure>=1.1.9",
+    "opencensus-ext-logging>=0.1.0",
+    "azure-identity>=1.12.0",
+    "azure-keyvault-secrets>=4.7.0",
+    "pyodbc>=4.0.39",
+    "protobuf>=4.21.0",
+]
+
+[project.entry-points."skyarclog.listeners"]
+console = "skyarclog.listeners.console.console_listener:ConsoleListener"
+file = "skyarclog.listeners.file.file_listener:FileListener"
+azure_blob = "skyarclog.listeners.azure.azure_blob_listener:AzureBlobListener"
+azure_appinsights = "skyarclog.listeners.azure.azure_appinsights_listener:AzureAppInsightsListener"
+ms_sql = "skyarclog.listeners.sql.mssql_listener:MsSqlListener"
+
+[project.entry-points."skyarclog.transformers"]
+json = "skyarclog.transformers.json.json_transformer:JsonTransformer"
+sql = "skyarclog.transformers.sql.sql_transformer:SqlTransformer"
+protobuf = "skyarclog.transformers.protobuf.protobuf_transformer:ProtobufTransformer"

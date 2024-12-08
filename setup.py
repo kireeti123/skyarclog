@@ -1,15 +1,37 @@
 from setuptools import setup, find_packages
+import os
+
+# Read the contents of README.md
+def read_readme():
+    readme_path = os.path.join(os.path.dirname(__file__), 'README.md')
+    try:
+        with open(readme_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception:
+        return "SkyArcLog - A modular, cloud-agnostic logging framework"
 
 setup(
     name="skyarclog",
-    version="0.1.0",
+    version="0.1.1",  # Increment version
     packages=find_packages(where="src"),
     package_dir={"": "src"},
-    install_requires=[
-        "python-json-logger>=2.0.7",
-        "python-dotenv>=1.0.0",
-        "colorama>=0.4.6",
+    
+    # Ensure setuptools is a requirement
+    setup_requires=[
+        'setuptools>=61.0.0',
+        'wheel',
     ],
+    
+    # Core dependencies
+    install_requires=[
+        'setuptools>=61.0.0',  # Explicitly include setuptools
+        'python-json-logger>=2.0.7',
+        'python-dotenv>=1.0.0',
+        'colorama>=0.4.6',
+        'packaging',  # Add packaging to resolve potential dependency issues
+    ],
+    
+    # Optional dependencies
     extras_require={
         'azure': [
             'azure-storage-blob>=12.0.0',
@@ -34,6 +56,8 @@ setup(
             'protobuf>=4.21.0',
         ],
     },
+    
+    # Entry points for plugin discovery
     entry_points={
         'skyarclog.listeners': [
             'console = skyarclog.listeners.console.console_listener:ConsoleListener',
@@ -48,13 +72,15 @@ setup(
             'protobuf = skyarclog.transformers.protobuf.protobuf_transformer:ProtobufTransformer [protobuf]',
         ],
     },
+    
+    # Metadata
     python_requires=">=3.8",
     description="A modular, cloud-agnostic logging framework",
-    long_description=open("README.md").read(),
+    long_description=read_readme(),
     long_description_content_type="text/markdown",
-    author="Your Name",
-    author_email="your.email@example.com",
-    url="https://github.com/yourusername/skyarclog",
+    author="Krishna Kireeti",
+    author_email="kireeti.kompella@example.com",
+    url="https://github.com/kireeti123/skyarclog",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
