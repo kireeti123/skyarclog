@@ -6,9 +6,11 @@ import time
 import uuid
 import random
 from datetime import datetime
-from skyarclog.logger import SkyArcLogger
 
-def simulate_web_requests(logger):
+import skyarclog
+from skyarclog import log
+
+def simulate_web_requests():
     """Simulate web application requests with telemetry."""
     for i in range(20):
         # Generate request context
@@ -20,9 +22,9 @@ def simulate_web_requests(logger):
         
         try:
             # Simulate request processing
-            logger.info(
-                f"Processing request {request_id}",
-                operation_id=request_id,
+            log.info(
+                "Processing request",
+                request_id=request_id,
                 user_id=user_id,
                 endpoint="/api/data",
                 http_method="GET",
@@ -38,9 +40,9 @@ def simulate_web_requests(logger):
             
             # Log successful request
             duration = time.time() - start_time
-            logger.info(
-                f"Request {request_id} completed",
-                operation_id=request_id,
+            log.info(
+                "Request completed",
+                request_id=request_id,
                 user_id=user_id,
                 duration_ms=int(duration * 1000),
                 status_code=200
@@ -49,9 +51,9 @@ def simulate_web_requests(logger):
         except Exception as e:
             # Log failed request
             duration = time.time() - start_time
-            logger.error(
-                f"Request {request_id} failed",
-                operation_id=request_id,
+            log.error(
+                "Request failed",
+                request_id=request_id,
                 user_id=user_id,
                 duration_ms=int(duration * 1000),
                 status_code=400,
@@ -59,7 +61,7 @@ def simulate_web_requests(logger):
                 error_message=str(e)
             )
 
-def simulate_dependency_calls(logger):
+def simulate_dependency_calls():
     """Simulate external dependency calls with telemetry."""
     dependencies = [
         ("sql_database", "SELECT * FROM users"),
@@ -77,8 +79,8 @@ def simulate_dependency_calls(logger):
         
         try:
             # Log dependency call start
-            logger.info(
-                f"Calling {dep_type}",
+            log.info(
+                "Calling dependency",
                 operation_id=operation_id,
                 dependency_type=dep_type,
                 dependency_call=dep_call,
@@ -94,8 +96,8 @@ def simulate_dependency_calls(logger):
             
             # Log successful dependency call
             duration = time.time() - start_time
-            logger.info(
-                f"Dependency call completed",
+            log.info(
+                "Dependency call completed",
                 operation_id=operation_id,
                 dependency_type=dep_type,
                 duration_ms=int(duration * 1000),
@@ -105,8 +107,8 @@ def simulate_dependency_calls(logger):
         except Exception as e:
             # Log failed dependency call
             duration = time.time() - start_time
-            logger.error(
-                f"Dependency call failed",
+            log.error(
+                "Dependency call failed",
                 operation_id=operation_id,
                 dependency_type=dep_type,
                 duration_ms=int(duration * 1000),
@@ -115,11 +117,11 @@ def simulate_dependency_calls(logger):
                 error_message=str(e)
             )
 
-def simulate_custom_metrics(logger):
+def simulate_custom_metrics():
     """Simulate custom application metrics."""
     # Simulate user session metrics
     active_sessions = random.randint(100, 500)
-    logger.info(
+    log.info(
         "Active user sessions",
         metric_name="active_sessions",
         metric_value=active_sessions,
@@ -129,8 +131,8 @@ def simulate_custom_metrics(logger):
     # Simulate response time metrics
     for endpoint in ["/api/users", "/api/orders", "/api/products"]:
         response_time = random.uniform(50, 200)
-        logger.info(
-            f"API response time for {endpoint}",
+        log.info(
+            "API response time",
             metric_name="api_response_time",
             metric_value=response_time,
             metric_type="timing",
@@ -140,7 +142,7 @@ def simulate_custom_metrics(logger):
     # Simulate business metrics
     orders_processed = random.randint(10, 50)
     order_value = random.uniform(1000, 5000)
-    logger.info(
+    log.info(
         "Orders processed",
         metric_name="orders_processed",
         metric_value=orders_processed,
@@ -150,28 +152,24 @@ def simulate_custom_metrics(logger):
 
 def main():
     """Run Application Insights logging example."""
-    # Get the absolute path to the configuration file
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(current_dir, 'skyarclog_logging.json')
-
-    # Initialize logger with configuration
-    logger = SkyArcLogger(config_path)
+    # Configure logging
+    skyarclog.configure()
     
     try:
         print("\n=== Phase 1: Web Request Telemetry ===")
         print("(Simulating web requests with success and failure scenarios)")
-        simulate_web_requests(logger)
+        simulate_web_requests()
         
         print("\n=== Phase 2: Dependency Call Telemetry ===")
         print("(Simulating external dependency calls)")
-        simulate_dependency_calls(logger)
+        simulate_dependency_calls()
         
         print("\n=== Phase 3: Custom Metrics ===")
         print("(Sending custom application metrics)")
-        simulate_custom_metrics(logger)
+        simulate_custom_metrics()
         
         # Log final summary
-        logger.info(
+        log.info(
             "Example completed",
             timestamp=datetime.utcnow().isoformat(),
             phases_completed=[
@@ -183,7 +181,7 @@ def main():
     
     finally:
         # Ensure all telemetry is sent
-        logger.close()
+        pass
 
 if __name__ == "__main__":
     main()
