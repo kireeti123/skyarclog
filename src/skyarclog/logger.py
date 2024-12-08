@@ -196,9 +196,14 @@ class SkyArcLogger:
         # Get handlers for this specific log level
         handlers = self._get_handlers_for_level(level)
         
+        # Get application name from configuration, default to 'Application'
+        config = self._config_manager.get_config()
+        app_name = config.get('name', 'Application')
+        
         log_data = {
             'level': level,
             'message': message,
+            'application': app_name,  # Add application name to log data
             **kwargs
         }
 
@@ -238,3 +243,27 @@ class SkyArcLogger:
             except Exception as e:
                 logging.error(f"Error closing listener: {str(e)}")
         self._listeners.clear()
+
+def log(level: str, message: str, **kwargs) -> None:
+    """
+    Global logging function to log messages.
+    
+    Args:
+        level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        message: Log message
+        **kwargs: Additional log context
+    """
+    # Create a logger with a default configuration
+    logger = SkyArcLogger(config_path=None)
+    logger.log(level, message, **kwargs)
+
+def configure(config_path: Optional[str] = None) -> None:
+    """
+    Configure the logger with a given configuration file.
+    
+    Args:
+        config_path: Path to the configuration file
+    """
+    # If no config path is provided, use the default configuration
+    logger = SkyArcLogger(config_path)
+    # Additional configuration logic can be added here if needed

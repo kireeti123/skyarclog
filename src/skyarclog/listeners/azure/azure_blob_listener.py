@@ -72,6 +72,9 @@ class AzureBlobListener(BufferedListener):
         if not batch:
             return
 
+        # Apply transformers to each message and ensure application name
+        transformed_batch = [self._apply_transformers(msg) for msg in batch]
+
         # Generate blob path
         now = datetime.utcnow()
         folder = self._folder_structure.format(
@@ -81,10 +84,12 @@ class AzureBlobListener(BufferedListener):
             hour=now.strftime('%H')
         )
         
-        blob_name = f"{folder}/{self._file_prefix}_{now.strftime('%Y%m%d_%H%M%S_%f')}"
+        # Include application name in blob name if available
+        app_name = transformed_batch[0].get('application', 'Application')
+        blob_name = f"{folder}/{self._file_prefix}_{app_name}_{now.strftime('%Y%m%d_%H%M%S_%f')}"
         
         # Convert messages to JSON
-        content = "\n".join(json.dumps(msg) for msg in batch)
+        content = "\n".join(json.dumps(msg) for msg in transformed_batch)
         
         # Compress if needed
         if self._compress and len(content.encode('utf-8')) >= self._min_size_for_compression:

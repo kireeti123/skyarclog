@@ -115,43 +115,47 @@ class ConsoleListener(BaseListener):
         """Handle a log message.
         
         Args:
-            message: Message to write to console
+            message: Log message to handle
         """
-        # Apply transformers
-        transformed_message = message
-        for transformer in self._transformers:
-            transformed_message = transformer.transform(transformed_message)
+        if not self.enabled:
+            return
 
-        # Get the base message and level
-        msg = str(transformed_message.get('message', ''))
+        # Apply transformers and ensure application name
+        transformed_message = self._apply_transformers(message)
+
+        # Extract log details
+        timestamp = transformed_message.get('timestamp', '')
         level = transformed_message.get('level', 'INFO')
+        msg = transformed_message.get('message', '')
+        
+        # Determine log level string and color
+        level_str = f" [{level}] " if level else " "
+        
+        # Prepare context information
+        context_str = ""
+        thread = transformed_message.get('thread')
+        process = transformed_message.get('process')
+        
+        if thread or process:
+            context_parts = []
+            if thread:
+                context_parts.append(f"thread={thread}")
+            if process:
+                context_parts.append(f"process={process}")
+            context_str = f" ({', '.join(context_parts)}) "
 
-        # Format timestamp if enabled
-        timestamp = ''
-        if self._show_timestamp:
-            ts = transformed_message.get('timestamp')
-            if ts:
-                timestamp = f"[{ts:{self._timestamp_format}}] "
-
-        # Format level if enabled
-        level_str = ''
-        if self._show_level:
-            level_str = f"[{level}] "
-
-        # Format thread/process if enabled
-        context = []
-        if self._show_thread and 'thread' in transformed_message:
-            context.append(f"thread={transformed_message['thread']}")
-        if self._show_process and 'process' in transformed_message:
-            context.append(f"process={transformed_message['process']}")
-        context_str = f"[{' '.join(context)}] " if context else ""
-
-        # Format additional fields as JSON
+        # Prepare extra information
         extra = {k: v for k, v in transformed_message.items() 
-                if k not in ('message', 'timestamp', 'level', 'thread', 'process')}
+                if k not in ('message', 'timestamp', 'level', 'thread', 'process', 'application')}
 
         # Construct the final message
         output = f"{timestamp}{level_str}{context_str}{msg}"
+        
+        # Add application name if present
+        app_name = transformed_message.get('application', '')
+        if app_name:
+            output = f"[{app_name}] {output}"
+        
         if extra:
             output = f"{output} {json.dumps(extra)}"
 

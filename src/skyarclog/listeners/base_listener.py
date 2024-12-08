@@ -44,6 +44,27 @@ class BaseListener(ABC):
         """
         self._transformers.append(transformer)
 
+    def _apply_transformers(self, message: Dict[str, Any]) -> Dict[str, Any]:
+        """Apply all registered transformers to the message.
+        
+        Args:
+            message: Original log message
+        
+        Returns:
+            Transformed message
+        """
+        transformed_message = message.copy()
+        
+        # Apply all transformers
+        for transformer in self._transformers:
+            transformed_message = transformer.transform(transformed_message)
+        
+        # Ensure application name is added if not present
+        if 'application' not in transformed_message:
+            transformed_message['application'] = self._config.get('application', 'Application')
+        
+        return transformed_message
+
     @abstractmethod
     def flush(self) -> None:
         """Flush any buffered messages."""

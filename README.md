@@ -23,7 +23,20 @@ SkyArcLog is a powerful, flexible, and extensible logging framework designed to 
 ### Install via pip
 
 ```bash
-pip install skyarclog
+pip install git+https://github.com/kireeti123/skyarclog.git
+```
+
+Or install with specific features:
+
+```bash
+# Install with Azure support
+pip install git+https://github.com/kireeti123/skyarclog.git#egg=skyarclog[azure]
+
+# Install with SQL support
+pip install git+https://github.com/kireeti123/skyarclog.git#egg=skyarclog[sql]
+
+# Install all features
+pip install git+https://github.com/kireeti123/skyarclog.git#egg=skyarclog[all]
 ```
 
 ### Development Installation
@@ -41,100 +54,130 @@ pip install -e .
 
 ## Quick Start
 
-### Basic Configuration
+### Basic Usage
 
-Create a `skyarclog_logging.json` configuration file:
+#### Simple Logging
+
+```python
+import skyarclog
+
+# Log a simple message
+skyarclog.log('INFO', 'Hello, SkyArcLog!')
+
+# Log with additional context
+skyarclog.log('WARNING', 'Processing error', 
+              extra={'user_id': 123, 'operation': 'data_sync'})
+```
+
+#### Configuration
+
+```python
+import skyarclog
+
+# Configure logging with a custom configuration file
+skyarclog.configure('/path/to/custom/config.json')
+
+# Log messages after configuration
+skyarclog.log('ERROR', 'Critical system error')
+```
+
+## Advanced Configuration
+
+### Configuration Keys
+
+The SkyArcLog framework supports a flexible JSON-based configuration with the following top-level keys:
+
+- `version`: Configuration version (currently `1.0`)
+- `name`: Application name (optional, defaults to 'Application')
+- `transformers`: Message transformation configurations
+- `listeners`: Log destination and output configurations
+- `loggers`: Logger-specific settings
+
+#### Example Configuration
 
 ```json
 {
     "version": 1.0,
-    "name": "My Application",
+    "name": "MyApplication",
+    "transformers": {
+        "json": {
+            "type": "json",
+            "indent": 2
+        }
+    },
+    "listeners": {
+        "console": {
+            "type": "console",
+            "level": "INFO"
+        },
+        "azure_blob": {
+            "type": "azure_blob",
+            "connection_string": "${AZURE_STORAGE_CONNECTION_STRING}",
+            "container_name": "applogs"
+        }
+    },
     "loggers": {
         "root": {
             "level": "WARNING",
-            "handlers": {
-                "DEBUG": ["console"],
-                "INFO": ["console"],
-                "WARNING": ["console"],
-                "ERROR": ["console", "azure-blob"],
-                "CRITICAL": ["console"]
-            }
+            "handlers": ["console", "azure_blob"]
         }
     }
 }
 ```
 
-### Python Usage
+## Core Components
+
+### Plugin Management
+
+SkyArcLog uses a plugin-based architecture for extensibility:
 
 ```python
-from skyarclog.logger import SkyArcLogger
+from skyarclog.core import PluginManager
 
-# Initialize logger with configuration
-logger = SkyArcLogger('path/to/skyarclog_logging.json')
-
-# Log messages
-logger.debug("Debug message")
-logger.info("Information message")
-logger.warning("Warning message")
-logger.error("Error message")
-logger.critical("Critical message")
+# Access the plugin manager (typically used internally)
+plugin_manager = PluginManager()
 ```
 
-## Configuration Options
+## Listeners
 
-### Loggers
+SkyArcLog supports multiple log listeners:
 
-- `level`: Minimum log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-- `handlers`: Specify handlers for different log levels
-  - List mode: Apply same handlers to all levels
-  - Dictionary mode: Level-specific handler routing
+- Console Listener
+- Azure Blob Storage Listener
+- Azure App Insights Listener
+- SQL Listener (MS SQL)
 
-### Listeners
+### Adding Custom Listeners
 
-Supported listeners:
-- `console`: Standard output logging
-- `file`: File-based logging
-- `azure-blob`: Azure Blob Storage logging
-- `azure-appinsights`: Azure App Insights logging
-- `ms-sql`: Microsoft SQL logging
+You can extend the framework by creating custom listeners that implement the `BaseListener` interface.
 
-### Transformers
+## Security Considerations
 
-- `json`: JSON formatting
-- `sql`: SQL-compatible formatting
-- `protobuf`: Protocol Buffers transformation
+- Use environment variables for sensitive information
+- Recommended to use Azure Key Vault for secret management
+- Avoid hardcoding credentials in configuration files
 
-## Advanced Configuration
+## Troubleshooting
 
-### Level-Specific Handlers
+### Common Issues
 
-```json
-{
-    "loggers": {
-        "root": {
-            "level": "WARNING",
-            "handlers": {
-                "DEBUG": ["console"],
-                "ERROR": ["console", "azure-blob", "ms-sql"]
-            }
-        }
-    }
-}
-```
+1. **ModuleNotFoundError**: Ensure you've installed the package with the correct optional dependencies
+2. **Configuration Errors**: Validate your JSON configuration file
+3. **Listener Plugins**: Make sure required dependencies are installed for specific listeners
 
-### Security Configuration
+## Performance and Scalability
 
-```json
-{
-    "security": {
-        "encryption": {
-            "enabled": true,
-            "type": "aes-gcm",
-            "key_rotation_interval": "1d"
-        }
-    }
-}
-```
+- Lightweight, minimal overhead logging framework
+- Supports buffered and asynchronous logging
+- Configurable log levels and transformers
+
+## Contributing
+
+Contributions are welcome! Please submit pull requests or open issues on the GitHub repository.
+
+## License
+
+[Specify your license here]
 
 ## Configuration Reference
 
@@ -143,7 +186,7 @@ Supported listeners:
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `version` | Number | Optional | `1.0` | Configuration version |
-| `name` | String | Optional | `"Application"` | Name of the application |
+| `name` | String | Optional | `"Application"` | Optional application name for identification (not used as a default logger name) |
 | `transformers` | Object | Optional | `{}` | Transformer configurations |
 | `listeners` | Object | Optional | `{}` | Listener configurations |
 | `loggers` | Object | **Required** | N/A | Logger configurations |
@@ -222,7 +265,6 @@ Each listener has its own specific configuration. Here are some common fields:
             "transformer": "json_transformer",
             "colors": {
                 "enabled": true,
-                "DEBUG": "cyan",
                 "ERROR": "red,bold"
             },
             "show_timestamp": true,
@@ -256,6 +298,162 @@ Each listener has its own specific configuration. Here are some common fields:
 2. Not all listeners need to be configured for every log level.
 3. Listeners and transformers are optional but recommended for comprehensive logging.
 4. Always keep sensitive information like connection strings secure and out of version control.
+5. The `name` field is purely for identification and documentation purposes
+6. It does not set a default name for the root logger
+7. Listener names are used as unique identifiers in the configuration
+
+## Configuration Keys Deep Dive
+
+#### Top-Level Keys
+
+1. **`version`**
+   - Purpose: Tracks configuration schema version
+   - Type: Number
+   - Default: `1.0`
+   - Usage: Helps manage configuration compatibility
+   - Example: 
+     ```json
+     {
+         "version": 1.1
+     }
+     ```
+
+2. **`name`**
+   - Purpose: Application identification
+   - Type: String
+   - Default: `"Application"`
+   - Usage: Purely descriptive, no functional impact
+   - Example:
+     ```json
+     {
+         "name": "MyWebApplication"
+     }
+     ```
+
+3. **`transformers`**
+   - Purpose: Define data transformation rules
+   - Type: Object
+   - Default: `{}`
+   - Nested Keys:
+     - Transformer Name (e.g., `"json_transformer"`)
+       - `type`: Transformation type (`"json"`, `"sql"`)
+       - `config`: Transformation-specific settings
+   - Example:
+     ```json
+     {
+         "transformers": {
+             "json_transformer": {
+                 "type": "json",
+                 "config": {
+                     "timestamp_format": "%Y-%m-%d %H:%M:%S",
+                     "include_fields": ["message", "level"]
+                 }
+             }
+         }
+     }
+     ```
+
+4. **`listeners`**
+   - Purpose: Configure log output destinations
+   - Type: Object
+   - Default: `{}`
+   - Nested Keys:
+     - Listener Name (e.g., `"console_log"`)
+       - `type`: Listener type (`"console"`, `"azure-blob"`)
+       - `enabled`: Whether listener is active
+       - `transformer`: Optional transformer name
+       - Listener-specific configuration
+   - Example:
+     ```json
+     {
+         "listeners": {
+             "primary_console": {
+                 "type": "console",
+                 "enabled": true,
+                 "transformer": "json_transformer",
+                 "colors": {
+                     "enabled": true,
+                     "ERROR": "red,bold"
+                 },
+                 "show_timestamp": true,
+                 "show_level": true
+             }
+         }
+     }
+     ```
+
+5. **`loggers`**
+   - Purpose: Define logging behavior
+   - Type: Object
+   - **Required Key**: `root`
+   - Nested Keys for `root`:
+     - `level`: Minimum log level
+     - `handlers`: Log destinations per level
+   - Example:
+     ```json
+     {
+         "loggers": {
+             "root": {
+                 "level": "WARNING",
+                 "handlers": {
+                     "DEBUG": ["debug_listener"],
+                     "ERROR": ["console", "azure-blob"]
+                 }
+             }
+         }
+     }
+     ```
+
+#### Configuration Hierarchy and Precedence
+
+1. Top-level keys are processed in this order:
+   - `version`
+   - `name`
+   - `transformers`
+   - `listeners`
+   - `loggers`
+
+2. Level-specific handler routing allows granular control:
+   ```json
+   {
+       "loggers": {
+           "root": {
+               "level": "WARNING",
+               "handlers": {
+                   "DEBUG": ["debug_log"],      // Only for DEBUG
+                   "ERROR": ["error_log"],      // Only for ERROR
+                   "WARNING": ["console"]       // Fallback for WARNING
+               }
+           }
+       }
+   }
+   ```
+
+#### Best Practices
+
+- Use meaningful, unique names for transformers and listeners
+- Keep sensitive information out of configuration files
+- Use environment variables or secret management for credentials
+- Validate configuration before deployment
+- Use the latest `version` for newest features
+
+#### Security Considerations
+
+- Listener connection strings should use environment variables
+- Never commit sensitive information to version control
+- Use Azure Key Vault or similar secure secret management
+
+Example with Environment Variables:
+```json
+{
+    "listeners": {
+        "azure_blob": {
+            "type": "azure-blob",
+            "container_connection_string": "@secret:AZURE_STORAGE_CONNECTION_STRING"
+        }
+    }
+}
+```
 
 ## Contributing
 

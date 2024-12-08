@@ -102,6 +102,9 @@ class AzureSqlListener(BufferedListener):
         if not batch:
             return
 
+        # Apply transformers to each message and ensure application name
+        transformed_batch = [self._apply_transformers(msg) for msg in batch]
+
         # Prepare insert statement
         insert_sql = f"""
         INSERT INTO [{self._schema}].[{self._table_name}]
@@ -111,7 +114,7 @@ class AzureSqlListener(BufferedListener):
         
         # Prepare batch values
         values = []
-        for msg in batch:
+        for msg in transformed_batch:
             # Extract common fields
             timestamp = msg.get('timestamp', datetime.utcnow())
             level = msg.get('level', 'INFO')
@@ -119,12 +122,12 @@ class AzureSqlListener(BufferedListener):
             
             # Extract special fields
             exception = msg.pop('exception', None)
-            app_name = msg.pop('application_name', None)
+            app_name = msg.get('application', 'Application')  # Use application name from transformer
             environment = msg.pop('environment', None)
             correlation_id = msg.pop('correlation_id', None)
             
             # Remove standard fields from custom dimensions
-            for field in ['timestamp', 'level', 'message']:
+            for field in ['timestamp', 'level', 'message', 'application']:
                 msg.pop(field, None)
             
             # Convert remaining fields to JSON

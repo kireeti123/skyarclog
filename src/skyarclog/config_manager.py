@@ -20,14 +20,20 @@ except ImportError:
 class ConfigManager:
     """Manages configuration and secrets for the logging framework."""
     
-    def __init__(self, config_path: str):
-        """Initialize the configuration manager.
+    def __init__(self, config_path: Optional[str] = None):
+        """Initialize configuration manager.
         
         Args:
-            config_path: Path to configuration file
+            config_path: Optional path to configuration file
         """
-        load_dotenv()
+        # Use default configuration if no path is provided
+        if config_path is None:
+            config_path = Path(__file__).parent / 'skyarclog_logging.json'
+        
+        # Ensure config_path is a Path object
         self.config_path = Path(config_path)
+        
+        load_dotenv()
         self._secret_client = self._initialize_keyvault_client()
         
         # Cache for secrets
