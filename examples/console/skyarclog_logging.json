@@ -1,6 +1,6 @@
 {
-    "version": "1.0",
-    "name": "Console Logging Example",
+    "version": 1.0,
+    "name": "Client App 1",
     "transformers": {
         "json": {
             "type": "json_formatter",
@@ -8,31 +8,46 @@
                 "indent": 2,
                 "sort_keys": true
             }
+        },
+        "sql": {
+            "type": "sql_formatter",
+            "config": {
+                "date_format": "%Y-%m-%d %H:%M:%S.%f",
+                "max_field_length": 4000
+            }
+        },
+        "protobuf": {
+            "type": "protobuf_transformer",
+            "config": {
+                "preserve_proto_field_names": true,
+                "message_type": "LogMessage"
+            }
         }
     },
     "listeners": {
         "console": {
             "enabled": true,
-            "transformer": "json",
-            "config": {
-                "colored": true,
-                "colors": {
-                    "DEBUG": "cyan",
-                    "INFO": "green",
-                    "WARNING": "yellow",
-                    "ERROR": "red",
-                    "CRITICAL": "red,bold"
-                },
-                "show_timestamp": true,
-                "timestamp_format": "%Y-%m-%d %H:%M:%S.%f",
-                "show_level": true
-            }
+            "format": "json",
+            "colors": {
+                "enabled": true,
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bold"
+            },
+            "output": "stdout",
+            "show_timestamp": true,
+            "timestamp_format": "%Y-%m-%d %H:%M:%S.%f",
+            "show_level": true,
+            "show_thread": true,
+            "show_process": true
         },
         "memory": {
             "enabled": true,
             "capacity": 1000,
             "flush_level": "ERROR",
-            "target_handlers": ["console", ""],
+            "target_handlers": ["console", "ms-sql"],
             "flush_on_capacity": true,
             "flush_interval": 60
         },
@@ -53,7 +68,43 @@
     "loggers": {
         "root": {
             "level": "WARNING",
-            "handlers": ["console"]
+            "handlers": {
+                "DEBUG": ["debug-listener"],
+                "INFO": ["info-listener"],
+                "WARNING": ["console"],
+                "ERROR": ["error-listener", "alert-system"],
+                "CRITICAL": ["critical-alert"]
+            }
+        },
+        "app": {
+            "level": "INFO",
+            "handlers": ["console", "azure-blob"],
+            "propagate": false,
+            "qualname": "skyarclog.app"
+        },
+        "app.api": {
+            "level": "INFO",
+            "handlers": ["console", "azure-blob", "azure-appinsights"],
+            "propagate": true,
+            "qualname": "skyarclog.app.api"
+        },
+        "app.background": {
+            "level": "DEBUG",
+            "handlers": ["console", "azure-blob"],
+            "propagate": true,
+            "qualname": "skyarclog.app.background"
+        },
+        "app.security": {
+            "level": "WARNING",
+            "handlers": ["console", "azure-blob", "azure-appinsights"],
+            "propagate": false,
+            "qualname": "skyarclog.app.security"
+        },
+        "app.audit": {
+            "level": "INFO",
+            "handlers": ["azure-blob", "ms-sql"],
+            "propagate": false,
+            "qualname": "skyarclog.app.audit"
         }
     },
     "security": {

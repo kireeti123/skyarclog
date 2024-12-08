@@ -52,58 +52,37 @@ def simulate_batch_processing(logger):
                 status="in_progress"
             )
             
-            # Simulate occasional warnings in batch
-            if random.random() < 0.3:
+            # Simulate occasional processing delays
+            if i % 2 == 0:
                 logger.warning(
-                    "Item processing delayed",
-                    batch_id=batch,
-                    item_id=i,
+                    "Item processing delayed", 
+                    batch_id=batch, 
+                    item_id=i, 
                     delay=random.uniform(0.1, 0.3)
                 )
         
-        logger.info(
-            f"Completed batch {batch}",
-            batch_id=batch,
-            items_processed=batch_size,
-            duration=random.uniform(1.0, 2.0)
-        )
+        logger.info(f"Completed batch {batch}", batch_id=batch, items_processed=batch_size, duration=random.uniform(1.0, 2.0))
 
 def main():
     """Run console logging example with memory buffer and queue processing."""
     # Get the absolute path to the configuration file
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(current_dir, 'skyarclog_logging.json')
-
-    # Initialize logger with configuration
+    config_path = os.path.join(current_dir, "skyarclog_logging.json")
+    
+    # Initialize logger with configuration path
     logger = SkyArcLogger(config_path)
     
-    try:
-        # Part 1: Normal application traffic
-        print("\n=== Simulating normal application traffic ===")
-        simulate_normal_traffic(logger)
-        
-        # Part 2: Error condition (triggers immediate flush)
-        print("\n=== Simulating error condition ===")
-        simulate_error_condition(logger)
-        
-        # Part 3: Batch processing
-        print("\n=== Simulating batch processing ===")
-        simulate_batch_processing(logger)
-        
-        # Part 4: Final critical message
-        logger.critical(
-            "Application shutdown initiated",
-            uptime=random.uniform(3600, 7200),
-            shutdown_reason="manual"
-        )
-        
-        # Wait for queue to process remaining messages
-        print("\n=== Waiting for queue to process remaining messages ===")
-        time.sleep(2)
+    print("\n=== Simulating normal application traffic ===")
+    simulate_normal_traffic(logger)
     
-    finally:
-        # Clean up and ensure all messages are flushed
-        logger.close()
+    print("\n=== Simulating error condition ===")
+    simulate_error_condition(logger)
+    
+    print("\n=== Simulating batch processing ===")
+    simulate_batch_processing(logger)
+    
+    print("\n=== Waiting for queue to process remaining messages ===")
+    time.sleep(1)  # Give time for any async logging to complete
 
 if __name__ == "__main__":
     main()

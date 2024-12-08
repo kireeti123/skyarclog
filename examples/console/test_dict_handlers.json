@@ -1,0 +1,14 @@
+{
+    "loggers": {
+        "root": {
+            "level": "WARNING",
+            "handlers": {
+                "DEBUG": ["debug-listener"],
+                "INFO": ["info-listener"],
+                "WARNING": ["console"],
+                "ERROR": ["error-listener", "alert-system"],
+                "CRITICAL": ["critical-alert"]
+            }
+        }
+    }
+}

@@ -1,9 +1,14 @@
 """SkyArcLog logger implementation."""
 
 import logging
-from typing import Dict, Any, Optional
+import warnings
+from typing import Dict, Any, Optional, List
 from .core.plugin_manager import PluginManager
 from .config_manager import ConfigManager
+
+class LoggerConfigurationWarning(Warning):
+    """Custom warning for logger configuration issues."""
+    pass
 
 class SkyArcLogger:
     """Main logger class for SkyArcLog."""
@@ -28,11 +33,108 @@ class SkyArcLogger:
         self._listeners = {}
         self._transformers = {}
         self._level = logging.INFO  # Default level
+        self._handlers_config = {}
         self._initialize_components()
+
+    def _validate_logger_configuration(self, config: Dict[str, Any]) -> None:
+        """
+        Validate and normalize logger configuration.
+        
+        Supports both list and dictionary handler configurations.
+        
+        Args:
+            config: Full logger configuration dictionary
+        """
+        logger_configs = config.get('loggers', {})
+        root_config = logger_configs.get('root', {})
+        
+        # Get root logger level
+        root_level_name = root_config.get('level', 'INFO').upper()
+        root_level_value = self._LEVEL_MAP.get(root_level_name, logging.INFO)
+        
+        # Normalize handlers configuration
+        handlers = root_config.get('handlers', [])
+        
+        # Reset handlers configuration
+        self._handlers_config = {}
+        
+        if isinstance(handlers, list):
+            # List of listeners: apply to all levels >= root level
+            for level_name, level_value in self._LEVEL_MAP.items():
+                if level_value >= root_level_value:
+                    self._handlers_config[level_name] = handlers
+        
+        elif isinstance(handlers, dict):
+            # Dictionary of level-specific handlers
+            for level_name, level_handlers in handlers.items():
+                level_name = level_name.upper()
+                
+                # Validate log level
+                if level_name not in self._LEVEL_MAP:
+                    warnings.warn(
+                        f"Invalid log level: {level_name}. This handler configuration will be ignored.",
+                        LoggerConfigurationWarning
+                    )
+                    continue
+                
+                level_value = self._LEVEL_MAP[level_name]
+                
+                # Only keep handlers for levels >= root logger level
+                if level_value >= root_level_value:
+                    self._handlers_config[level_name] = level_handlers
+
+    def _get_handlers_for_level(self, level: str) -> List[str]:
+        """
+        Retrieve handlers for a specific log level.
+        
+        Implements level-based handler routing with override capabilities.
+        
+        Args:
+            level: Current log level
+        
+        Returns:
+            List of applicable handler names
+        """
+        # Normalize level
+        level = level.upper()
+        
+        # Validate current log level
+        if level not in self._LEVEL_MAP:
+            return []
+        
+        # Get root logger configuration
+        root_config = self._config_manager.get_config().get('loggers', {}).get('root', {})
+        root_level_name = root_config.get('level', 'INFO').upper()
+        root_level_value = self._LEVEL_MAP.get(root_level_name, logging.INFO)
+        current_level_value = self._LEVEL_MAP[level]
+        
+        # If current log level is lower than root logger level, return empty list
+        if current_level_value < root_level_value:
+            return []
+        
+        # Collect applicable handlers
+        applicable_handlers = []
+        
+        # Priority 1: Exact level handlers
+        if level in self._handlers_config:
+            applicable_handlers.extend(self._handlers_config[level])
+        
+        # Priority 2: Handlers for levels less than current level
+        for config_level, handlers in self._handlers_config.items():
+            config_level_value = self._LEVEL_MAP[config_level]
+            
+            # Add handlers for levels less than current level
+            if config_level_value < current_level_value:
+                applicable_handlers.extend(handlers)
+        
+        return list(set(applicable_handlers))
 
     def _initialize_components(self) -> None:
         """Initialize listeners and transformers from configuration."""
         config = self._config_manager.get_config()
+        
+        # Validate logger configuration before processing
+        self._validate_logger_configuration(config)
         
         # Initialize transformers first
         transformer_configs = config.get('transformers', {})
@@ -91,17 +193,22 @@ class SkyArcLogger:
         if not self._should_log(level):
             return
 
+        # Get handlers for this specific log level
+        handlers = self._get_handlers_for_level(level)
+        
         log_data = {
             'level': level,
             'message': message,
             **kwargs
         }
 
-        for listener in self._listeners.values():
-            try:
-                listener.handle(log_data)
-            except Exception as e:
-                logging.error(f"Error in listener {listener.__class__.__name__}: {str(e)}")
+        for handler_name in handlers:
+            listener = self._listeners.get(handler_name)
+            if listener:
+                try:
+                    listener.handle(log_data)
+                except Exception as e:
+                    logging.error(f"Error in listener {listener.__class__.__name__}: {str(e)}")
 
     def debug(self, message: str, **kwargs) -> None:
         """Log a debug message."""
@@ -124,9 +231,10 @@ class SkyArcLogger:
         self.log('CRITICAL', message, **kwargs)
 
     def close(self) -> None:
-        """Close all listeners."""
+        """Clean up and close all listeners."""
         for listener in self._listeners.values():
             try:
                 listener.close()
             except Exception as e:
-                logging.error(f"Error closing listener {listener.__class__.__name__}: {str(e)}")
+                logging.error(f"Error closing listener: {str(e)}")
+        self._listeners.clear()
