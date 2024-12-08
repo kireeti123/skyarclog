@@ -1,7 +1,7 @@
 {
     "version": 1.0,
     "name": "Client App 1",
-    "transformers": {
+    "formatters": {
         "json": {
             "indent": 2,
             "sort_keys": true

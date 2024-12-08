@@ -22,8 +22,8 @@ def main():
         print(f"Invalid JSON in configuration file: {config_path}")
         return
 
-    # Initialize SkyArcLogger with the configuration
-    logger = SkyArcLogger(config)
+    # Initialize SkyArcLogger with the configuration path
+    logger = SkyArcLogger(config_path)
 
     # Demonstrate logging at different levels
     logger.debug("This is a debug message")

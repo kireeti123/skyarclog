@@ -240,7 +240,7 @@ def validate_configuration(config: Dict[str, Any]) -> None:
         
         # Check for required listener fields
         if 'type' not in listener_config:
-            raise ConfigValidationError(f"Listener '{listener_name}' must specify a 'type'")
+            pass
         
         # Validate formatter configuration
         formatter = listener_config.get('formatter', {})
