@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="skyarclog-azure-sql",
+    name="skyarclog-azure-ms-sql",
     version="0.1.0",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
@@ -11,7 +11,7 @@ setup(
     ],
     entry_points={
         'skyarclog.listeners': [
-            'azure_sql = skyarclog_azure_sql.listener:AzureSqlListener'
+            'azure_ms_sql = skyarclog_azure_ms_sql.listener:AzureMsSqlListener'
         ]
     },
     python_requires=">=3.8"
