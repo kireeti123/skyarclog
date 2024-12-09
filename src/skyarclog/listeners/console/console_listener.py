@@ -7,7 +7,7 @@ from colorama import init, Fore, Style
 from ..base_listener import BaseListener
 from ...formatters import create_formatter
 from skyarclog import config
-from skyarclog.config.schemas import validate_listener_config
+from skyarclog.config import schemas
 import warnings
 
 # Initialize colorama for cross-platform color support
@@ -205,4 +205,4 @@ class ConsoleListener(BaseListener):
 
     def validate_config(self, config: Dict[str, Any]) -> None:
         """Validate the configuration for the console listener."""
-        validate_listener_config('console', config)  # Use schema validation
+        schemas.validate_listener_config('console', config)  # Use schema validation
