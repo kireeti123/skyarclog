@@ -6,7 +6,8 @@ from typing import Any, Dict, Optional
 from colorama import init, Fore, Style
 from ..base_listener import BaseListener
 from ...formatters import create_formatter
-from ...schemas import validate_listener_config
+from skyarclog import config
+from skyarclog.config.schemas import validate_listener_config
 import warnings
 
 # Initialize colorama for cross-platform color support

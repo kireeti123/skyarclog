@@ -6,16 +6,16 @@ import logging
 
 # Global logger configuration
 __all__ = [
-    'log'
+    'logger'
 ]
 
 # Global logger instance
 _GLOBAL_LOGGER = None
 
-class Log:
+class Logger:
     """
     A wrapper class to provide intuitive logging methods.
-    Allows logging using methods like log.debug(), log.info(), etc.
+    Allows logging using methods like logger.debug(), logger.info(), etc.
     """
     def __init__(self):
         self._logger = None
@@ -60,8 +60,8 @@ class Log:
         self._ensure_logger()
         self._logger.critical(message, extra=kwargs)
 
-# Create a global log instance
-log = Log()
+# Create a global logger instance
+logger = Logger()
 
 # Prevent further imports during initialization
 __import__ = None
