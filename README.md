@@ -2,107 +2,72 @@
 
 ## Overview
 
-SkyArcLog is a powerful, flexible, and extensible logging framework designed to provide comprehensive logging capabilities for modern Python applications. It offers dynamic handler routing, configurable log levels, and support for multiple output destinations.
+SkyArcLog is a powerful, flexible, and extensible logging framework designed for modern Python applications. It provides dynamic configuration, pluggable components, and comprehensive logging capabilities with support for multiple output destinations and formats.
 
 ## Key Features
 
-- 🌈 **Flexible Configuration**: Support for list and dictionary-based handler configurations
-- 🔍 **Dynamic Log Routing**: Level-specific handler assignment
-- 🚀 **Multiple Listeners**: Supports console, file, Azure Blob, Azure App Insights, and more
-- 🔒 **Security-First**: Built-in encryption and key rotation
-- 🌐 **Transformer Support**: JSON, SQL, and Protobuf formatters
-- 🔧 **Highly Configurable**: Granular control over log formatting, colors, and output
+- 🔌 **Plugin Architecture**: Modular design with dynamic component loading
+- 🎨 **Flexible Formatters**: Built-in support for JSON, SQL, and Protobuf formats
+- 🎯 **Multiple Listeners**: Console, File, Azure services (Blob, App Insights, MS SQL)
+- ⚙️ **Dynamic Configuration**: JSON-based configuration with environment variable support
+- 🔒 **Secure by Design**: Best practices for credential management
+- 🚀 **High Performance**: Asynchronous logging and buffering capabilities
+- 🛠️ **Extensible**: Easy to add custom formatters and listeners
 
 ## Installation
 
-### Prerequisites
+### Requirements
 - Python 3.8+
 - pip
 - setuptools >= 61.0
 
-### Install from GitHub
+### Basic Installation
 
 ```bash
-# Basic installation
-pip install git+https://github.com/kireeti123/skyarclog.git
-
-# Install with specific features
-pip install git+https://github.com/kireeti123/skyarclog.git#egg=skyarclog[azure]
-pip install git+https://github.com/kireeti123/skyarclog.git#egg=skyarclog[sql]
-pip install git+https://github.com/kireeti123/skyarclog.git#egg=skyarclog[all]
+pip install skyarclog
 ```
 
-### Troubleshooting Installation
-
-If you encounter `ModuleNotFoundError: No module named 'pkg_resources'`:
-
-1. Upgrade pip and setuptools:
-```bash
-pip install --upgrade pip setuptools wheel
-```
-
-2. Ensure you have the latest version of the package:
-```bash
-pip install --upgrade git+https://github.com/kireeti123/skyarclog.git
-```
-
-### Development Installation
+### Feature-specific Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/kireeti123/skyarclog.git
-cd skyarclog
+# Azure features (includes Blob Storage, App Insights, and MS SQL)
+pip install skyarclog[azure]
 
-# Create a virtual environment (recommended)
-python3 -m venv .venv
-source .venv/bin/activate
+# Protobuf support
+pip install skyarclog[protobuf]
 
-# Install in editable mode
-pip install -e .
+# All features
+pip install skyarclog[all]
 ```
 
 ## Quick Start
 
 ### Basic Usage
 
-#### Simple Logging
-
 ```python
-import skyarclog
+from skyarclog.logger import SkyArcLogger
 
-# Log a simple message
-skyarclog.log('INFO', 'Hello, SkyArcLog!')
+# Initialize with config file
+logger = SkyArcLogger("config.json")
+
+# Log messages at different levels
+logger.debug("Debug message")
+logger.info("Info message")
+logger.warning("Warning message")
+logger.error("Error message")
+logger.critical("Critical message")
 
 # Log with additional context
-skyarclog.log('WARNING', 'Processing error', 
-              extra={'user_id': 123, 'operation': 'data_sync'})
+logger.info("User login", extra={
+    "user_id": "12345",
+    "ip_address": "192.168.1.1",
+    "status": "success"
+})
 ```
 
-#### Configuration
+## Configuration
 
-```python
-import skyarclog
-
-# Configure logging with a custom configuration file
-skyarclog.configure('/path/to/custom/config.json')
-
-# Log messages after configuration
-skyarclog.log('ERROR', 'Critical system error')
-```
-
-## Advanced Configuration
-
-### Configuration Keys
-
-The SkyArcLog framework supports a flexible JSON-based configuration with the following top-level keys:
-
-- `version`: Configuration version (currently `1.0`)
-- `name`: Application name (optional, defaults to 'Application')
-- `formatters`: Message transformation configurations
-- `listeners`: Log destination and output configurations
-- `loggers`: Logger-specific settings
-
-#### Example Configuration
+### Basic Configuration Structure
 
 ```json
 {
@@ -110,444 +75,163 @@ The SkyArcLog framework supports a flexible JSON-based configuration with the fo
     "name": "MyApplication",
     "formatters": {
         "json": {
-            "type": "json",
-            "indent": 2
+            "type": "json_formatter",
+            "config": {
+                "indent": 2,
+                "sort_keys": true
+            }
         }
     },
     "listeners": {
         "console": {
             "type": "console",
-            "level": "INFO"
+            "enabled": true,
+            "level": "INFO",
+            "formatter": "json"
         },
-        "azure_blob": {
-            "type": "azure_blob",
-            "connection_string": "${AZURE_STORAGE_CONNECTION_STRING}",
-            "container_name": "applogs"
+        "ms_sql": {
+            "type": "azure_ms_sql",
+            "enabled": true,
+            "config": {
+                "connection_string": "${AZURE_SQL_CONNECTION}",
+                "table_name": "ApplicationLogs",
+                "formatter": "sql"  // Uses the built-in SQL formatter
+            }
         }
     },
     "loggers": {
         "root": {
-            "level": "WARNING",
-            "handlers": ["console", "azure_blob"]
+            "level": "INFO",
+            "handlers": ["console", "ms_sql"]
         }
     }
 }
 ```
 
-## Core Components
+## Components
 
-### Plugin Management
+### Built-in Formatters
 
-SkyArcLog uses a plugin-based architecture for extensibility:
+- **JSON Formatter**: Flexible JSON output with customizable indentation
+- **SQL Formatter**: Built-in formatter for SQL storage (used by Azure MS SQL)
+- **Protobuf Formatter**: Efficient binary format using Protocol Buffers
+- **Text Formatter**: Simple text output (fallback formatter)
 
-```python
-from skyarclog.core import PluginManager
+### Built-in Listeners
 
-# Access the plugin manager (typically used internally)
-plugin_manager = PluginManager()
+- **Console Listener**: Standard output logging
+- **File Listener**: File-based logging with rotation support
+- **Memory Listener**: In-memory logging for testing
+- **Queue Listener**: Asynchronous logging via queue
+
+### Azure Integration
+
+The Azure package (`skyarclog[azure]`) provides the following components:
+
+- **Azure MS SQL Listener**: Log to Azure SQL Database
+  - Uses the built-in SQL formatter
+  - Supports connection pooling and batching
+  - Automatic reconnection handling
+
+- **Azure Blob Listener**: Store logs in Azure Blob Storage
+  - Configurable blob naming patterns
+  - Support for container management
+  - Automatic retry logic
+
+- **Azure App Insights Listener**: Send telemetry to Azure Application Insights
+  - Custom dimension support
+  - Built-in performance metrics
+  - Exception tracking
+
+## Azure Integration Examples
+
+### Azure MS SQL Configuration
+
+```json
+{
+    "listeners": {
+        "sql": {
+            "type": "azure_ms_sql",
+            "enabled": true,
+            "config": {
+                "connection_string": "${AZURE_SQL_CONNECTION}",
+                "table_name": "logs",
+                "batch_size": 100,
+                "flush_interval": 30,
+                "formatter": "sql"  // Uses the built-in SQL formatter
+            }
+        }
+    }
+}
 ```
 
-## Listeners
+### Azure Blob Storage Configuration
 
-SkyArcLog supports multiple log listeners:
-
-- Console Listener
-- Azure Blob Storage Listener
-- Azure App Insights Listener
-- SQL Listener (MS SQL)
-
-### Adding Custom Listeners
-
-You can extend the framework by creating custom listeners that implement the `BaseListener` interface.
-
-## Security Considerations
-
-- Use environment variables for sensitive information
-- Recommended to use Azure Key Vault for secret management
-- Avoid hardcoding credentials in configuration files
-
-## Troubleshooting
-
-### Common Issues
-
-1. **ModuleNotFoundError**: Ensure you've installed the package with the correct optional dependencies
-2. **Configuration Errors**: Validate your JSON configuration file
-3. **Listener Plugins**: Make sure required dependencies are installed for specific listeners
-
-## Performance and Scalability
-
-- Lightweight, minimal overhead logging framework
-- Supports buffered and asynchronous logging
-- Configurable log levels and formatters
-
-## Repository Structure
-
-### `.gitignore`
-
-The project includes a comprehensive `.gitignore` file that covers:
-- Python-specific ignores
-  - `__pycache__/`
-  - `*.py[cod]`
-- Distribution and packaging files
-  - `dist/`
-  - `build/`
-  - `*.egg-info/`
-- Virtual environments
-  - `venv/`
-  - `.env/`
-- IDE-specific files
-  - `.idea/`
-  - `.vscode/`
-- Logging and temporary files
-  - `*.log`
-  - `*.tmp`
-- Operating system files
-  - `.DS_Store`
-  - `Thumbs.db`
-- Testing and coverage files
-  - `.coverage`
-  - `htmlcov/`
-- Sensitive configuration files
-  - `*.env`
-  - `*.secret`
-
-### Project Layout
-
+```json
+{
+    "listeners": {
+        "blob": {
+            "type": "azure_blob",
+            "enabled": true,
+            "config": {
+                "connection_string": "${AZURE_STORAGE_CONNECTION}",
+                "container_name": "logs",
+                "blob_prefix": "app/{date}/"
+            }
+        }
+    }
+}
 ```
-skyarclog/
-│
-├── src/
-│   └── skyarclog/
-│       ├── __init__.py
-│       ├── logger.py
-│       ├── config_manager.py
-│       │
-│       ├── listeners/
-│       │   ├── base_listener.py
-│       │   └── console/
-│       │       └── console_listener.py
-│       │
-│       └── formatters/
-│           ├── __init__.py
-│           ├── base_formatter.py
-│           ├── text_formatter.py
-│           └── json_formatter.py
-│
-├── tests/
-│   └── ... (test files)
-│
-├── examples/
-│   └── ... (example usage scripts)
-│
-├── .gitignore
-├── pyproject.toml
-└── README.md
+
+### Azure Application Insights Configuration
+
+```json
+{
+    "listeners": {
+        "appinsights": {
+            "type": "azure_appinsights",
+            "enabled": true,
+            "config": {
+                "instrumentation_key": "${APPINSIGHTS_KEY}",
+                "buffer_size": 100
+            }
+        }
+    }
+}
 ```
+
+## Best Practices
+
+### Security
+1. Use environment variables for sensitive information
+2. Never commit configuration files with credentials
+3. Use Azure Key Vault for secret management
+4. Implement proper access controls for log storage
+
+### Performance
+1. Use appropriate log levels
+2. Configure batch processing for database listeners
+3. Implement log rotation for file-based logging
+4. Use async listeners for high-throughput scenarios
+
+### Configuration
+1. Validate configurations before deployment
+2. Use meaningful component names
+3. Implement proper error handling
+4. Set appropriate log levels for different environments
 
 ## Contributing
 
-### Getting Started
 1. Fork the repository
-2. Clone your fork
-3. Create a new branch for your feature or bugfix
-4. Make your changes
-5. Run tests
-6. Submit a pull request
-
-### Development Guidelines
-- Follow PEP 8 style guidelines
-- Write comprehensive tests for new features
-- Update documentation
-- Ensure all tests pass before submitting a PR
-
-### Reporting Issues
-- Use GitHub Issues
-- Provide a clear and descriptive title
-- Include steps to reproduce the issue
-- Share relevant code snippets or configuration
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## License
 
-[Specify your license here]
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Configuration Reference
+## Support
 
-#### Top-Level Configuration Fields
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `version` | Number | Optional | `1.0` | Configuration version |
-| `name` | String | Optional | `"Application"` | Optional application name for identification (not used as a default logger name) |
-| `formatters` | Object | Optional | `{}` | Transformer configurations |
-| `listeners` | Object | Optional | `{}` | Listener configurations |
-| `loggers` | Object | **Required** | N/A | Logger configurations |
-
-#### Loggers Configuration
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `root.level` | String | Optional | `"INFO"` | Global logging level. Allowed values: `"DEBUG"`, `"INFO"`, `"WARNING"`, `"ERROR"`, `"CRITICAL"` |
-| `root.handlers` | Object/List | Optional | `[]` | Log handlers for different log levels |
-
-#### Listener Configuration
-
-Each listener has its own specific configuration. Here are some common fields:
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `enabled` | Boolean | Optional | `true` | Whether the listener is active |
-| `formatter` | String | Optional | `null` | Name of the formatter to use |
-
-##### Console Listener Specific Configuration
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `output` | String | Optional | `"stdout"` | Output stream (`"stdout"` or `"stderr"`) |
-| `colors.enabled` | Boolean | Optional | `true` | Enable colored output |
-| `show_timestamp` | Boolean | Optional | `true` | Display timestamp in log |
-| `show_level` | Boolean | Optional | `true` | Display log level |
-| `show_thread` | Boolean | Optional | `true` | Display thread information |
-| `show_process` | Boolean | Optional | `true` | Display process information |
-
-##### Azure Blob Listener Specific Configuration
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `container_connection_string` | String | **Required** | Azure Storage connection string |
-| `container_name` | String | **Required** | Name of the blob container |
-| `folder_structure` | String | Optional | Custom folder structure for logs |
-| `file_prefix` | String | Optional | Prefix for log files |
-| `compression.enabled` | Boolean | Optional | Enable log file compression |
-
-##### Azure App Insights Listener Specific Configuration
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `instrumentation_key` | String | **Required** | Azure App Insights instrumentation key |
-| `enable_local_storage` | Boolean | Optional | Enable local storage for logs |
-
-##### MS SQL Listener Specific Configuration
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `connection_string` | String | **Required** | SQL Database connection string |
-| `table_name` | String | Optional | Custom table name for logs |
-| `schema` | String | Optional | Database schema name |
-
-#### Example of a Comprehensive Configuration
-
-```json
-{
-    "version": 1.0,
-    "name": "My Complex Application",
-    "formatters": {
-        "json_formatter": {
-            "type": "json",
-            "config": {
-                "timestamp_format": "%Y-%m-%d %H:%M:%S",
-                "include_fields": ["message", "level", "timestamp"]
-            }
-        }
-    },
-    "listeners": {
-        "primary_console": {
-            "type": "console",
-            "enabled": true,
-            "formatter": "json_formatter",
-            "colors": {
-                "enabled": true,
-                "ERROR": "red,bold"
-            },
-            "show_timestamp": true,
-            "show_level": true
-        },
-        "blob_backup": {
-            "type": "azure-blob",
-            "enabled": true,
-            "container_connection_string": "YOUR_AZURE_CONNECTION_STRING",
-            "container_name": "applogs",
-            "compression": {
-                "enabled": true
-            }
-        }
-    },
-    "loggers": {
-        "root": {
-            "level": "WARNING",
-            "handlers": {
-                "DEBUG": ["primary_console"],
-                "ERROR": ["primary_console", "blob_backup"]
-            }
-        }
-    }
-}
-```
-
-#### Notes on Configuration
-
-1. The configuration supports both simple list-based and advanced dictionary-based handler routing.
-2. Not all listeners need to be configured for every log level.
-3. Listeners and formatters are optional but recommended for comprehensive logging.
-4. Always keep sensitive information like connection strings secure and out of version control.
-5. The `name` field is purely for identification and documentation purposes
-6. It does not set a default name for the root logger
-7. Listener names are used as unique identifiers in the configuration
-
-## Configuration Keys Deep Dive
-
-#### Top-Level Keys
-
-1. **`version`**
-   - Purpose: Tracks configuration schema version
-   - Type: Number
-   - Default: `1.0`
-   - Usage: Helps manage configuration compatibility
-   - Example: 
-     ```json
-     {
-         "version": 1.1
-     }
-     ```
-
-2. **`name`**
-   - Purpose: Application identification
-   - Type: String
-   - Default: `"Application"`
-   - Usage: Purely descriptive, no functional impact
-   - Example:
-     ```json
-     {
-         "name": "MyWebApplication"
-     }
-     ```
-
-3. **`formatters`**
-   - Purpose: Define data transformation rules
-   - Type: Object
-   - Default: `{}`
-   - Nested Keys:
-     - Transformer Name (e.g., `"json_formatter"`)
-       - `type`: Transformation type (`"json"`, `"sql"`)
-       - `config`: Transformation-specific settings
-   - Example:
-     ```json
-     {
-         "formatters": {
-             "json_formatter": {
-                 "type": "json",
-                 "config": {
-                     "timestamp_format": "%Y-%m-%d %H:%M:%S",
-                     "include_fields": ["message", "level"]
-                 }
-             }
-         }
-     }
-     ```
-
-4. **`listeners`**
-   - Purpose: Configure log output destinations
-   - Type: Object
-   - Default: `{}`
-   - Nested Keys:
-     - Listener Name (e.g., `"console_log"`)
-       - `type`: Listener type (`"console"`, `"azure-blob"`)
-       - `enabled`: Whether listener is active
-       - `formatter`: Optional formatter name
-       - Listener-specific configuration
-   - Example:
-     ```json
-     {
-         "listeners": {
-             "primary_console": {
-                 "type": "console",
-                 "enabled": true,
-                 "formatter": "json_formatter",
-                 "colors": {
-                     "enabled": true,
-                     "ERROR": "red,bold"
-                 },
-                 "show_timestamp": true,
-                 "show_level": true
-             }
-         }
-     }
-     ```
-
-5. **`loggers`**
-   - Purpose: Define logging behavior
-   - Type: Object
-   - **Required Key**: `root`
-   - Nested Keys for `root`:
-     - `level`: Minimum log level
-     - `handlers`: Log destinations per level
-   - Example:
-     ```json
-     {
-         "loggers": {
-             "root": {
-                 "level": "WARNING",
-                 "handlers": {
-                     "DEBUG": ["debug_listener"],
-                     "ERROR": ["console", "azure-blob"]
-                 }
-             }
-         }
-     }
-     ```
-
-#### Configuration Hierarchy and Precedence
-
-1. Top-level keys are processed in this order:
-   - `version`
-   - `name`
-   - `formatters`
-   - `listeners`
-   - `loggers`
-
-2. Level-specific handler routing allows granular control:
-   ```json
-   {
-       "loggers": {
-           "root": {
-               "level": "WARNING",
-               "handlers": {
-                   "DEBUG": ["debug_log"],      // Only for DEBUG
-                   "ERROR": ["error_log"],      // Only for ERROR
-                   "WARNING": ["console"]       // Fallback for WARNING
-               }
-           }
-       }
-   }
-   ```
-
-#### Best Practices
-
-- Use meaningful, unique names for formatters and listeners
-- Keep sensitive information out of configuration files
-- Use environment variables or secret management for credentials
-- Validate configuration before deployment
-- Use the latest `version` for newest features
-
-#### Security Considerations
-
-- Listener connection strings should use environment variables
-- Never commit sensitive information to version control
-- Use Azure Key Vault or similar secure secret management
-
-Example with Environment Variables:
-```json
-{
-    "listeners": {
-        "azure_blob": {
-            "type": "azure-blob",
-            "container_connection_string": "@secret:AZURE_STORAGE_CONNECTION_STRING"
-        }
-    }
-}
-```
-
-## Contact
-
-Your Name - your.email@example.com
-
-Project Link: [https://github.com/your-org/skyarclog](https://github.com/your-org/skyarclog)
+For issues and feature requests, please use the GitHub issue tracker.
