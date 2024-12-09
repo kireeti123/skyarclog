@@ -1,0 +1,61 @@
+{
+    "console": {
+        "required_fields": {
+            "enabled": "bool",
+            "formatter": "str"
+        },
+        "optional_fields": {
+            "colors": "dict",
+            "output": "str",
+            "show_timestamp": "bool",
+            "timestamp_format": "str",
+            "show_level": "bool",
+            "show_thread": "bool",
+            "show_process": "bool"
+        }
+    },
+    "file": {
+        "required_fields": {
+            "enabled": "bool",
+            "formatter": "str",
+            "path": "str"
+        },
+        "optional_fields": {
+            "max_size": "int",
+            "backup_count": "int",
+            "compression": "dict",
+            "rotation": "dict",
+            "permissions": "dict"
+        }
+    },
+    "azure_appinsights": {
+        "required_fields": {
+            "enabled": "bool",
+            "instrumentation_key": "str"
+        },
+        "optional_fields": {
+            "enable_local_storage": "bool",
+            "buffer": "dict"
+        }
+    },
+    "azure_blob": {
+        "required_fields": {
+            "enabled": "bool",
+            "connection_string": "str",
+            "container_name": "str"
+        },
+        "optional_fields": {
+            "blob_prefix": "str"
+        }
+    },
+    "azure_mssql": {
+        "required_fields": {
+            "enabled": "bool",
+            "connection_string": "str"
+        },
+        "optional_fields": {
+            "table_name": "str",
+            "schema_name": "str"
+        }
+    }
+}

@@ -6,6 +6,8 @@ import logging
 import importlib
 import inspect
 from pathlib import Path
+import json
+
 
 __all__ = [
     'ConfigValidationError',
@@ -198,7 +200,7 @@ def validate_formatters(formatters: Dict[str, Any], context: ValidationContext) 
             
             # Validate formatter config
             formatter_class = formatter_classes[0]
-            formatter_class.validate_config(config.get('config', {}))
+            validate_formatter_config(formatter_type, config)
             
         except ImportError:
             raise ConfigValidationError(
@@ -251,7 +253,7 @@ def validate_listeners(listeners: Dict[str, Any], context: ValidationContext) ->
             
             # Validate listener config
             listener_class = listener_classes[0]
-            listener_class.validate_config(config.get('config', {}))
+            validate_listener_config(listener_type, config)
             
         except ImportError:
             raise ConfigValidationError(
@@ -260,3 +262,60 @@ def validate_listeners(listeners: Dict[str, Any], context: ValidationContext) ->
             )
         except Exception as e:
             raise ConfigValidationError(str(e), listener_context.path)
+
+
+# Load listener schemas from JSON file
+with open(Path(__file__).parent / 'listener_schemas.json') as f:
+    LISTENER_SCHEMAS = json.load(f)
+
+# Load formatter schemas from JSON file
+with open(Path(__file__).parent / 'formatter_schemas.json') as f:
+    FORMATTER_SCHEMAS = json.load(f)
+
+
+def get_listener_schema(listener_type: str) -> Optional[Dict[str, Any]]:
+    """Get schema for listener type."""
+    return LISTENER_SCHEMAS.get(listener_type)
+
+
+def get_formatter_schema(formatter_type: str) -> Optional[Dict[str, Any]]:
+    """Get schema for formatter type."""
+    return FORMATTER_SCHEMAS.get(formatter_type)
+
+
+def validate_listener_config(listener_type: str, config: Dict[str, Any]) -> None:
+    """Validate listener configuration against its schema."""
+    schema = get_listener_schema(listener_type)
+    if not schema:
+        raise ConfigValidationError(f"No schema found for listener type '{listener_type}'")
+    
+    # Validate required fields
+    validate_required_keys(config, list(schema['required_fields'].keys()), [listener_type])
+    
+    # Validate types for required fields
+    for field, expected_type in schema['required_fields'].items():
+        validate_type(config[field], expected_type, [listener_type, field])
+    
+    # Validate optional fields
+    for field, expected_type in schema['optional_fields'].items():
+        if field in config:
+            validate_type(config[field], expected_type, [listener_type, field])
+
+
+def validate_formatter_config(formatter_type: str, config: Dict[str, Any]) -> None:
+    """Validate formatter configuration against its schema."""
+    schema = get_formatter_schema(formatter_type)
+    if not schema:
+        raise ConfigValidationError(f"No schema found for formatter type '{formatter_type}'")
+    
+    # Validate required fields
+    validate_required_keys(config, list(schema['required_fields'].keys()), [formatter_type])
+    
+    # Validate types for required fields
+    for field, expected_type in schema['required_fields'].items():
+        validate_type(config[field], expected_type, [formatter_type, field])
+    
+    # Validate optional fields
+    for field, expected_type in schema['optional_fields'].items():
+        if field in config:
+            validate_type(config[field], expected_type, [formatter_type, field])

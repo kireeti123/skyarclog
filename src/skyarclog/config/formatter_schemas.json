@@ -1,0 +1,20 @@
+{
+    "simple": {
+        "required_fields": {
+            "enabled": "bool",
+            "format": "str"
+        },
+        "optional_fields": {
+            "datefmt": "str"
+        }
+    },
+    "json": {
+        "required_fields": {
+            "enabled": "bool"
+        },
+        "optional_fields": {
+            "indent": "int",
+            "sort_keys": "bool"
+        }
+    }
+}

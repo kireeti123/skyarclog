@@ -3,6 +3,9 @@
 from typing import Any, Dict, List
 from opencensus.ext.azure.log_exporter import AzureLogHandler
 from ..buffered_listener import BufferedListener
+from ..exceptions import ConfigValidationError
+from ..utils import validate_type
+from ..schemas import validate_listener_config
 
 
 class AzureAppInsightsListener(BufferedListener):
@@ -27,13 +30,28 @@ class AzureAppInsightsListener(BufferedListener):
         """
         super().initialize(name, config)
         
-        self._instrumentation_key = config['instrumentation_key']
+        # Validate instrumentation key
+        self._instrumentation_key = config.get('instrumentation_key')
+        if not self._instrumentation_key:
+            raise ValueError("Instrumentation key must be provided.")
+        
         self._enable_local_storage = config.get('enable_local_storage', False)
         
+        # Validate buffer configuration
+        buffer_config = config.get('buffer', {})
+        if 'max_size' not in buffer_config:
+            raise ValueError("Buffer max_size must be provided.")
+        if 'flush_interval' not in buffer_config:
+            raise ValueError("Buffer flush_interval must be provided.")
+
         self._handler = AzureLogHandler(
             connection_string=f"InstrumentationKey={self._instrumentation_key}",
             enable_local_storage=self._enable_local_storage
         )
+
+    def validate_config(self, config: Dict[str, Any]) -> None:
+        """Validate the configuration for Azure App Insights listener."""
+        validate_listener_config('azure_appinsights', config)  # Use schema validation
 
     def _handle_transformed_message(self, message: Dict[str, Any]) -> None:
         """Handle a transformed message.

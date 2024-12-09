@@ -18,7 +18,7 @@
     "listeners": {
         "console": {
             "enabled": true,
-            "format": "json",
+            "formatter": "json",
             "colors": {
                 "enabled": true,
                 "DEBUG": "cyan",
@@ -59,7 +59,7 @@
         },
         "azure-appinsights": {
             "enabled": true,
-            "format": "json",
+            "formatter": "json",
             "instrumentation_key": "${kv:APPINSIGHTS-INSTRUMENTATION-KEY}",
             "enable_local_storage": true,
             "buffer": {

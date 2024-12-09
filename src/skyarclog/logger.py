@@ -40,6 +40,10 @@ class SkyArcLogger:
         
         if config_path:
             self.load_configuration(config_path)
+        else:
+            raise ValueError("Configuration path must be provided.")
+        
+        self._initialize_components()
 
     def load_configuration(self, config_path: str) -> None:
         """Load logger configuration from file.
@@ -52,7 +56,7 @@ class SkyArcLogger:
         """
         from .config.validator import validate_configuration
         
-        config_manager = ConfigManager()
+        config_manager = ConfigManager(config_path)
         config = config_manager.load_configuration(config_path)
         
         # Validate configuration

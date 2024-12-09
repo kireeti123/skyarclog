@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 from colorama import init, Fore, Style
 from ..base_listener import BaseListener
 from ...formatters import create_formatter
+from ...schemas import validate_listener_config
 import warnings
 
 # Initialize colorama for cross-platform color support
@@ -200,3 +201,7 @@ class ConsoleListener(BaseListener):
     def close(self):
         """Clean up resources."""
         self.flush()
+
+    def validate_config(self, config: Dict[str, Any]) -> None:
+        """Validate the configuration for the console listener."""
+        validate_listener_config('console', config)  # Use schema validation

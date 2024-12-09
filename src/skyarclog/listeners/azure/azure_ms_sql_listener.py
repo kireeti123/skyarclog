@@ -3,6 +3,7 @@
 from typing import Dict, Any
 import pyodbc
 from ..base_listener import BaseListener
+from ..schemas import validate_listener_config
 
 class AzureMsSqlListener(BaseListener):
     """Listener that writes log messages to Azure SQL Database."""
@@ -53,6 +54,10 @@ class AzureMsSqlListener(BaseListener):
         with self._connection.cursor() as cursor:
             cursor.execute(create_table_sql)
             self._connection.commit()
+
+    def validate_config(self, config: Dict[str, Any]) -> None:
+        """Validate the configuration for Azure MS SQL listener."""
+        validate_listener_config('azure_mssql', config)  # Use schema validation
 
     def emit(self, message: Dict[str, Any]) -> None:
         """Write the message to Azure SQL Database.

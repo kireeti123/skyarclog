@@ -126,6 +126,22 @@ class BaseListener(ABC):
         """Clean up resources."""
         pass
 
+    @abstractmethod
+    def validate_config(self, config: Dict[str, Any]) -> None:
+        """Validate the configuration for the listener."""
+        required_fields = ['enabled']  # Example required fields
+        validate_required_keys(config, required_fields, self._name)
+        
+        # Add additional checks as needed for specific listeners
+        if 'type' in config:
+            validate_type(config['type'], str, self._name + ['type'])
+        
+        # Check for optional fields and validate their types
+        if 'output' in config:
+            validate_type(config['output'], str, self._name + ['output'])
+        
+        # Add more validation rules as necessary
+
     @property
     def enabled(self) -> bool:
         """Get whether the listener is enabled.

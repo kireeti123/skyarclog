@@ -3,6 +3,7 @@
 from typing import Dict, Any, List
 from collections import deque
 from ..base_listener import BaseListener
+from ..schemas import validate_listener_config
 
 class MemoryListener(BaseListener):
     """Listener that stores log messages in memory."""
@@ -41,3 +42,7 @@ class MemoryListener(BaseListener):
     def close(self) -> None:
         """Clean up resources."""
         self.clear()
+
+    def validate_config(self, config: Dict[str, Any]) -> None:
+        """Validate the configuration for Memory listener."""
+        validate_listener_config('memory', config)  # Use schema validation
