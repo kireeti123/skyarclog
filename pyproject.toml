@@ -48,7 +48,7 @@ azure_blob = "skyarclog.listeners.azure.azure_blob_listener:AzureBlobListener"
 azure_appinsights = "skyarclog.listeners.azure.azure_appinsights_listener:AzureAppInsightsListener"
 ms_sql = "skyarclog.listeners.sql.mssql_listener:MsSqlListener"
 
-[project.entry-points."skyarclog.transformers"]
-json = "skyarclog.transformers.json.json_transformer:JsonTransformer"
-sql = "skyarclog.transformers.sql.sql_transformer:SqlTransformer"
-protobuf = "skyarclog.transformers.protobuf.protobuf_transformer:ProtobufTransformer"
+[project.entry-points."skyarclog.formatters"]
+json = "skyarclog.formatters.json.json_formatter:JsonTransformer"
+sql = "skyarclog.formatters.sql.sql_formatter:SqlTransformer"
+protobuf = "skyarclog.formatters.protobuf.protobuf_formatter:ProtobufTransformer"

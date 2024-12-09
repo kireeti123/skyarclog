@@ -2,18 +2,47 @@
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
-from ..transformers.base_transformer import BaseTransformer
-
+from ..formatters.base_formatter import BaseFormatter
+import logging
 
 class BaseListener(ABC):
     """Abstract base class for all log listeners."""
 
-    def __init__(self):
-        """Initialize the listener."""
-        self._transformers: List[BaseTransformer] = []
+    def __init__(self, config: Dict[str, Any]):
+        """Initialize the listener.
+        
+        Args:
+            config: Listener configuration
+        """
+        self._config = config
+        self._formatters: List[BaseFormatter] = []
         self._enabled: bool = True
         self._name: Optional[str] = None
-        self._config: Dict[str, Any] = {}
+        self._setup_formatters()
+
+    def _setup_formatters(self) -> None:
+        """Set up the formatters based on configuration."""
+        from ..formatters import create_formatter
+
+        formatter_name = self._config.get('formatter')
+        if formatter_name:
+            try:
+                formatter_config = self.get_formatter_config(formatter_name)
+                self._formatters.append(create_formatter(formatter_name, formatter_config))
+            except Exception as e:
+                logging.warning(f"Failed to create formatter {formatter_name}: {e}")
+
+    def get_formatter_config(self, format_name: str) -> Dict[str, Any]:
+        """Get formatter configuration from global formatters section.
+        
+        Args:
+            format_name: Name of the format/formatter
+            
+        Returns:
+            Formatter configuration dictionary
+        """
+        formatters_config = self._config.get('formatters', {})
+        return formatters_config.get(format_name, {})
 
     @abstractmethod
     def initialize(self, name: str, config: Dict[str, Any]) -> None:
@@ -36,16 +65,16 @@ class BaseListener(ABC):
         """
         pass
 
-    def add_transformer(self, transformer: BaseTransformer) -> None:
-        """Add a message transformer.
+    def add_formatter(self, formatter: BaseFormatter) -> None:
+        """Add a message formatter.
         
         Args:
-            transformer: Transformer to add
+            formatter: Transformer to add
         """
-        self._transformers.append(transformer)
+        self._formatters.append(formatter)
 
-    def _apply_transformers(self, message: Any) -> Dict[str, Any]:
-        """Apply all registered transformers to the message.
+    def _apply_formatters(self, message: Any) -> Dict[str, Any]:
+        """Apply all registered formatters to the message.
         
         Args:
             message: Original log message
@@ -59,10 +88,10 @@ class BaseListener(ABC):
         
         transformed_message = message.copy()
         
-        # Apply all transformers
-        for transformer in self._transformers:
-            # Ensure transformer returns a dictionary
-            result = transformer.transform(transformed_message)
+        # Apply all formatters
+        for formatter in self._formatters:
+            # Ensure formatter returns a dictionary
+            result = formatter.transform(transformed_message)
             if isinstance(result, dict):
                 transformed_message = result
             else:
@@ -73,6 +102,19 @@ class BaseListener(ABC):
             transformed_message['application'] = self._config.get('application', 'Application')
         
         return transformed_message
+
+    def format_message(self, message: Dict[str, Any]) -> Any:
+        """Format the message using the configured formatter.
+        
+        Args:
+            message: Message to format
+            
+        Returns:
+            Formatted message
+        """
+        if self._formatters:
+            return self._apply_formatters(message)
+        return message
 
     @abstractmethod
     def flush(self) -> None:

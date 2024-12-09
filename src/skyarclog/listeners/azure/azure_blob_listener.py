@@ -1,114 +1,87 @@
 """Azure Blob Storage listener implementation."""
 
-import json
-import gzip
-import os
+from typing import Dict, Any
 from datetime import datetime
-from typing import Any, Dict, List
+import json
 from azure.storage.blob import BlobServiceClient
-from ..buffered_listener import BufferedListener
+from ..base_listener import BaseListener
 
+class AzureBlobListener(BaseListener):
+    """Listener that writes log messages to Azure Blob Storage."""
 
-class AzureBlobListener(BufferedListener):
-    """Listener for Azure Blob Storage."""
-
-    def __init__(self):
-        """Initialize the Azure Blob Storage listener."""
-        super().__init__()
-        self._blob_service: BlobServiceClient = None
-        self._container_name: str = None
-        self._folder_structure: str = "{year}/{month}/{day}/{hour}"
-        self._file_prefix: str = "app_log"
-        self._file_extension: str = ".json"
-        self._compress: bool = False
-        self._min_size_for_compression: int = 10 * 1024 * 1024  # 10MB
-
-    def initialize(self, name: str, config: Dict[str, Any]) -> None:
-        """Initialize the listener with configuration.
+    def __init__(self, config: Dict[str, Any]):
+        """Initialize Azure Blob listener.
         
         Args:
-            name: Name of the listener instance
-            config: Configuration dictionary containing:
-                - container_connection_string: Azure Storage connection string
-                - container_name: Blob container name
-                - folder_structure: Format for folder structure (default: {year}/{month}/{day}/{hour})
-                - file_prefix: Prefix for log files
-                - file_extension: Extension for log files
-                - compression: Compression settings
-                - buffer: Buffer configuration (inherited from BufferedListener)
+            config: Listener configuration
         """
-        super().initialize(name, config)
-        
-        # Initialize blob service
-        connection_string = config['container_connection_string']
-        self._blob_service = BlobServiceClient.from_connection_string(connection_string)
-        
-        # Set container and path configuration
-        self._container_name = config['container_name']
-        self._folder_structure = config.get('folder_structure', self._folder_structure)
-        self._file_prefix = config.get('file_prefix', self._file_prefix)
-        self._file_extension = config.get('file_extension', self._file_extension)
-        
-        # Set compression configuration
-        compression_config = config.get('compression', {})
-        self._compress = compression_config.get('enabled', False)
-        self._min_size_for_compression = compression_config.get('min_size', 10 * 1024 * 1024)
+        super().__init__(config)
+        self._blob_service = None
+        self._container_name = self._config.get('container_name', 'logs')
+        self._connection_string = self._config.get('connection_string')
+        self._blob_prefix = self._config.get('blob_prefix', '')
+        self._setup_blob_service()
 
-    def _handle_transformed_message(self, message: Dict[str, Any]) -> None:
-        """Handle a transformed message.
+    def _setup_blob_service(self) -> None:
+        """Set up the blob service client."""
+        if not self._connection_string:
+            raise ValueError("Azure Blob connection string not provided")
+
+        try:
+            self._blob_service = BlobServiceClient.from_connection_string(
+                self._connection_string
+            )
+            # Create container if it doesn't exist
+            container_client = self._blob_service.get_container_client(
+                self._container_name
+            )
+            if not container_client.exists():
+                container_client.create_container()
+        except Exception as e:
+            raise RuntimeError(f"Failed to connect to Azure Blob Storage: {e}")
+
+    def _get_blob_name(self, timestamp: datetime) -> str:
+        """Generate a blob name based on timestamp.
         
         Args:
-            message: Message to send to Blob Storage
+            timestamp: Message timestamp
+            
+        Returns:
+            Blob name
         """
-        # Not used - we handle messages in batches
-        pass
+        date_str = timestamp.strftime('%Y/%m/%d/%H_%M_%S_%f')
+        return f"{self._blob_prefix}/{date_str}.json"
 
-    def _send_batch(self, batch: List[Dict[str, Any]]) -> None:
-        """Send a batch of messages to Blob Storage.
+    def emit(self, message: Dict[str, Any]) -> None:
+        """Write the message to Azure Blob Storage.
         
         Args:
-            batch: List of messages to send
+            message: Message to write
         """
-        if not batch:
+        if not self._blob_service:
             return
 
-        # Apply transformers to each message and ensure application name
-        transformed_batch = [self._apply_transformers(msg) for msg in batch]
-
-        # Generate blob path
-        now = datetime.utcnow()
-        folder = self._folder_structure.format(
-            year=now.strftime('%Y'),
-            month=now.strftime('%m'),
-            day=now.strftime('%d'),
-            hour=now.strftime('%H')
-        )
-        
-        # Include application name in blob name if available
-        app_name = transformed_batch[0].get('application', 'Application')
-        blob_name = f"{folder}/{self._file_prefix}_{app_name}_{now.strftime('%Y%m%d_%H%M%S_%f')}"
-        
-        # Convert messages to JSON
-        content = "\n".join(json.dumps(msg) for msg in transformed_batch)
-        
-        # Compress if needed
-        if self._compress and len(content.encode('utf-8')) >= self._min_size_for_compression:
-            content = gzip.compress(content.encode('utf-8'))
-            blob_name += ".gz"
-        else:
-            blob_name += self._file_extension
-        
-        # Upload to blob storage
-        container_client = self._blob_service.get_container_client(self._container_name)
-        blob_client = container_client.get_blob_client(blob_name)
-        
-        if isinstance(content, str):
-            content = content.encode('utf-8')
-        
-        blob_client.upload_blob(content, overwrite=True)
+        try:
+            formatted_message = self.format_message(message)
+            timestamp = datetime.now()
+            blob_name = self._get_blob_name(timestamp)
+            
+            # Add timestamp to message
+            formatted_message['timestamp'] = timestamp.isoformat()
+            
+            # Convert message to JSON
+            message_json = json.dumps(formatted_message, indent=2)
+            
+            # Upload to blob storage
+            blob_client = self._blob_service.get_blob_client(
+                container=self._container_name,
+                blob=blob_name
+            )
+            blob_client.upload_blob(message_json, overwrite=True)
+        except Exception as e:
+            raise RuntimeError(f"Failed to write message to Azure Blob Storage: {e}")
 
     def close(self) -> None:
-        """Clean up resources."""
-        super().close()
+        """Close the blob service client."""
         if self._blob_service:
             self._blob_service.close()

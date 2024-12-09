@@ -1,21 +1,21 @@
-"""Plugin management system for dynamic loading of listeners and transformers."""
+"""Plugin management system for dynamic loading of listeners and formatters."""
 
 import importlib
 import logging
 import pkg_resources
 from typing import Dict, Type, Optional, Any
 from ..listeners.base_listener import BaseListener
-from ..transformers.base_transformer import BaseTransformer
+from ..formatters.base_formatter import BaseFormatter
 
 logger = logging.getLogger(__name__)
 
 class PluginManager:
-    """Manages dynamic loading of listeners and transformers."""
+    """Manages dynamic loading of listeners and formatters."""
 
     def __init__(self):
         """Initialize plugin manager."""
         self._listener_plugins: Dict[str, Type[BaseListener]] = {}
-        self._transformer_plugins: Dict[str, Type[BaseTransformer]] = {}
+        self._formatter_plugins: Dict[str, Type[BaseFormatter]] = {}
         self._loaded_packages: Dict[str, bool] = {}
 
     def register_listener(self, name: str, listener_class: Type[BaseListener]) -> None:
@@ -27,14 +27,14 @@ class PluginManager:
         """
         self._listener_plugins[name] = listener_class
 
-    def register_transformer(self, name: str, transformer_class: Type[BaseTransformer]) -> None:
-        """Register a transformer plugin.
+    def register_formatter(self, name: str, formatter_class: Type[BaseFormatter]) -> None:
+        """Register a formatter plugin.
         
         Args:
-            name: Name of the transformer
-            transformer_class: Transformer class to register
+            name: Name of the formatter
+            formatter_class: Transformer class to register
         """
-        self._transformer_plugins[name] = transformer_class
+        self._formatter_plugins[name] = formatter_class
 
     def get_listener(self, name: str) -> Optional[Type[BaseListener]]:
         """Get a listener plugin by name.
@@ -49,18 +49,18 @@ class PluginManager:
             self._load_listener_plugin(name)
         return self._listener_plugins.get(name)
 
-    def get_transformer(self, name: str) -> Optional[Type[BaseTransformer]]:
-        """Get a transformer plugin by name.
+    def get_formatter(self, name: str) -> Optional[Type[BaseFormatter]]:
+        """Get a formatter plugin by name.
         
         Args:
-            name: Name of the transformer
+            name: Name of the formatter
             
         Returns:
             Transformer class if found, None otherwise
         """
-        if name not in self._transformer_plugins:
-            self._load_transformer_plugin(name)
-        return self._transformer_plugins.get(name)
+        if name not in self._formatter_plugins:
+            self._load_formatter_plugin(name)
+        return self._formatter_plugins.get(name)
 
     def _load_listener_plugin(self, name: str) -> None:
         """Load a listener plugin by name.
@@ -89,121 +89,92 @@ class PluginManager:
         except Exception as e:
             logger.warning(f"Error loading listener plugin '{name}': {str(e)}")
 
-    def _load_transformer_plugin(self, name: str) -> None:
-        """Load a transformer plugin by name.
+    def _load_formatter_plugin(self, name: str) -> None:
+        """Load a formatter plugin by name.
         
         Args:
-            name: Name of the transformer to load
+            name: Name of the formatter to load
         """
         try:
             # Try to load from entry points
-            for entry_point in pkg_resources.iter_entry_points('skyarclog.transformers'):
+            for entry_point in pkg_resources.iter_entry_points('skyarclog.formatters'):
                 if entry_point.name == name:
-                    transformer_class = entry_point.load()
-                    self.register_transformer(name, transformer_class)
+                    formatter_class = entry_point.load()
+                    self.register_formatter(name, formatter_class)
                     return
 
             # Try direct import if no entry point found
-            module_name = f"skyarclog.transformers.{name}_transformer"
+            module_name = f"skyarclog.formatters.{name}_formatter"
             try:
                 module = importlib.import_module(module_name)
                 class_name = f"{name.title()}Transformer"
-                transformer_class = getattr(module, class_name)
-                self.register_transformer(name, transformer_class)
+                formatter_class = getattr(module, class_name)
+                self.register_formatter(name, formatter_class)
             except (ImportError, AttributeError) as e:
-                logger.debug(f"Could not load transformer plugin '{name}': {str(e)}")
+                logger.debug(f"Could not load formatter plugin '{name}': {str(e)}")
 
         except Exception as e:
-            logger.warning(f"Error loading transformer plugin '{name}': {str(e)}")
+            logger.warning(f"Error loading formatter plugin '{name}': {str(e)}")
 
-    def create_listener(self, name: str, config: Dict[str, Any]) -> Optional[BaseListener]:
-        """Create a listener instance by name.
+    def create_listener(self, name: str, config: dict) -> BaseListener:
+        """Create a listener instance.
         
         Args:
-            name: Name of the listener key in configuration
-            config: Listener configuration
+            name: Name of the listener to create
+            config: Configuration for the listener
             
         Returns:
-            Listener instance if successful, None otherwise
+            Configured listener instance
+            
+        Raises:
+            ImportError: If listener module cannot be imported
+            AttributeError: If listener class cannot be found
         """
-        try:
-            # Map listener names to their corresponding class names
-            listener_type_map = {
-                'console': 'console',
-                'file': 'file',
-                'network': 'network',
-                # Add more mappings as needed
-            }
-            
-            # Get the listener type based on the name
-            type_name = listener_type_map.get(name)
-            
-            if not type_name:
-                logger.warning(f"No listener mapping found for '{name}'")
-                return None
-            
-            # Attempt to get the listener class
-            listener_class = self.get_listener(type_name)
-            
-            if listener_class:
-                # Create listener instance
-                listener = listener_class()
-                
-                # Initialize the listener with its name and configuration
-                listener.initialize(name, config)
-                
-                return listener
-            
-            # If no listener found, log a warning
-            logger.warning(f"No listener found for type '{type_name}'")
-            return None
-        
-        except Exception as e:
-            logger.error(f"Error creating listener '{name}': {str(e)}")
-            return None
+        from ..listeners import create_listener
+        return create_listener(name, config)
 
-    def create_transformer(self, name: str, config: Dict[str, Any]) -> Optional[BaseTransformer]:
-        """Create a transformer instance by name.
+    def create_formatter(self, name: str, config: Dict[str, Any]) -> Optional[BaseFormatter]:
+        """Create a formatter instance by name.
         
         Args:
-            name: Name of the transformer key in configuration
+            name: Name of the formatter key in configuration
             config: Transformer configuration
             
         Returns:
             Transformer instance if successful, None otherwise
         """
         try:
-            # Map transformer names to their corresponding class names
-            transformer_type_map = {
+            # Map formatter names to their corresponding class names
+            formatter_type_map = {
                 'json': 'json',
                 'sql': 'sql',
                 'protobuf': 'protobuf',
                 # Add more mappings as needed
             }
             
-            # Get the transformer type based on the name
-            type_name = transformer_type_map.get(name)
+            # Get the formatter type based on the name
+            type_name = formatter_type_map.get(name)
             
             if not type_name:
-                logger.warning(f"No transformer mapping found for '{name}'")
+                logger.warning(f"No formatter mapping found for '{name}'")
                 return None
             
-            # Attempt to get the transformer class
-            transformer_class = self.get_transformer(type_name)
+            # Attempt to get the formatter class
+            formatter_class = self.get_formatter(type_name)
             
-            if transformer_class:
-                # Create transformer instance
-                transformer = transformer_class()
+            if formatter_class:
+                # Create formatter instance
+                formatter = formatter_class()
                 
-                # Configure the transformer with the provided config
-                transformer.configure(config)
+                # Configure the formatter with the provided config
+                formatter.configure(config)
                 
-                return transformer
+                return formatter
             
-            # If no transformer found, log a warning
-            logger.warning(f"No transformer found for type '{type_name}'")
+            # If no formatter found, log a warning
+            logger.warning(f"No formatter found for type '{type_name}'")
             return None
         
         except Exception as e:
-            logger.error(f"Error creating transformer '{name}': {str(e)}")
+            logger.error(f"Error creating formatter '{name}': {str(e)}")
             return None

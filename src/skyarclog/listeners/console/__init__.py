@@ -1,4 +1,4 @@
-"""Console listener package."""
+"""Console-specific listeners."""
 
 from .console_listener import ConsoleListener
 

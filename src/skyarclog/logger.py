@@ -6,19 +6,14 @@ from typing import Dict, Any, Optional, List
 from pathlib import Path
 import sys
 import traceback
+import os
 
-# Lazy import to prevent circular dependencies
-def _lazy_import_config_manager():
-    from .config_manager import ConfigManager
-    return ConfigManager
+from .core.exceptions import LoggerConfigurationWarning, ConfigValidationError
+from .config_manager import ConfigManager
+from .core.plugin_manager import PluginManager
 
-def _lazy_import_plugin_manager():
-    from .core.plugin_manager import PluginManager
-    return PluginManager
-
-class LoggerConfigurationWarning(Warning):
-    """Custom warning for logger configuration issues."""
-    pass
+# Global logger instance
+_GLOBAL_LOGGER = None
 
 class SkyArcLogger:
     """Main logger class for SkyArcLog."""
@@ -38,57 +33,51 @@ class SkyArcLogger:
         Args:
             config_path: Optional path to configuration file
         """
-        # Lazy import to prevent circular dependencies
-        ConfigManager = _lazy_import_config_manager()
-        PluginManager = _lazy_import_plugin_manager()
-
-        # Initialize configuration
-        self._config_manager = ConfigManager(config_path)
-        self._config = self._config_manager.get_config()
-        
-        # Initialize plugin manager
-        self._plugin_manager = PluginManager()
-        
-        # Initialize logging components
+        self._config = {}
+        self._formatters = {}
         self._listeners = {}
-        self._transformers = {}
-        self._level = logging.INFO  # Default level
-        self._handlers_config = {}
+        self._plugin_manager = None
         
-        # Set up logging
+        if config_path:
+            self.load_configuration(config_path)
+
+    def load_configuration(self, config_path: str) -> None:
+        """Load logger configuration from file.
+        
+        Args:
+            config_path: Path to configuration file
+            
+        Raises:
+            ConfigValidationError: If configuration is invalid
+        """
+        from .config.validator import validate_configuration
+        
+        config_manager = ConfigManager()
+        config = config_manager.load_configuration(config_path)
+        
+        # Validate configuration
+        try:
+            validate_configuration(config)
+        except ConfigValidationError as e:
+            raise ConfigValidationError(f"Invalid configuration: {e}")
+        
+        self._config = config
         self._initialize_components()
 
     def _initialize_components(self):
         """Initialize logging components based on configuration."""
-        # Lazy import to prevent circular dependencies
         from .formatters import create_formatter
+        from .listeners import create_listener
 
-        # Initialize transformers (now formatters)
+        # Initialize formatters
         formatters_config = self._config.get('formatters', {})
         for formatter_name, formatter_config in formatters_config.items():
             try:
-                # Dynamically detect formatter type based on configuration
-                if 'type' in formatter_config:
-                    formatter_type = formatter_config['type']
-                    config = formatter_config.get('config', {})
-                else:
-                    # If no type specified, use the key as the type
-                    formatter_type = formatter_name
-                    config = formatter_config
-
-                # Import the appropriate formatter dynamically
-                formatter_module = __import__(f'.{formatter_type}', 
-                                              fromlist=[''], 
-                                              package='skyarclog.formatters')
-                formatter_class = getattr(formatter_module, 
-                                          ''.join(word.capitalize() for word in formatter_type.split('_')))
-                
-                # Create and store the formatter
-                formatter = formatter_class(config)
-                self._transformers[formatter_name] = formatter
+                formatter = create_formatter(formatter_name, formatter_config)
+                self._formatters[formatter_name] = formatter
             except Exception as e:
                 warnings.warn(
-                    f"Could not initialize formatter {formatter_name}: {e}", 
+                    f"Could not initialize formatter {formatter_name}: {e}",
                     LoggerConfigurationWarning
                 )
 
@@ -96,11 +85,12 @@ class SkyArcLogger:
         listeners_config = self._config.get('listeners', {})
         for listener_name, listener_config in listeners_config.items():
             try:
-                listener = self._plugin_manager.create_listener(listener_name, listener_config)
-                self._listeners[listener_name] = listener
+                if listener_config.get('enabled', True):
+                    listener = create_listener(listener_name, listener_config)
+                    self._listeners[listener_name] = listener
             except Exception as e:
                 warnings.warn(
-                    f"Could not initialize listener {listener_name}: {e}", 
+                    f"Could not initialize listener {listener_name}: {e}",
                     LoggerConfigurationWarning
                 )
 
@@ -110,7 +100,7 @@ class SkyArcLogger:
         level_name = root_logger_config.get('level', 'WARNING').upper()
         self._level = self._LEVEL_MAP.get(level_name, logging.WARNING)
 
-    def log(self, level: str, message: str, **kwargs):
+    def log(self, level: str, message: Any, **kwargs):
         """
         Log a message with the specified level and additional context.
         
@@ -122,8 +112,8 @@ class SkyArcLogger:
         # Convert string level to numeric level
         numeric_level = self._LEVEL_MAP.get(level.upper(), logging.INFO)
         
-        # Apply transformers
-        for transformer in self._transformers.values():
+        # Apply formatters
+        for formatter in self._formatters.values():
             # Convert bytes to string if necessary
             if isinstance(message, bytes):
                 try:
@@ -131,7 +121,7 @@ class SkyArcLogger:
                 except UnicodeDecodeError:
                     message = str(message)
             
-            message = transformer.transform(message, **kwargs)
+            message = formatter.transform(message, **kwargs)
         
         # Send to listeners
         for listener in self._listeners.values():

@@ -5,7 +5,8 @@ import json
 from typing import Any, Dict, Optional
 from colorama import init, Fore, Style
 from ..base_listener import BaseListener
-from ...transformers import create_transformer
+from ...formatters import create_formatter
+import warnings
 
 # Initialize colorama for cross-platform color support
 init()
@@ -68,27 +69,35 @@ class ConsoleListener(BaseListener):
         self._show_thread = config.get('show_thread', True)
         self._show_process = config.get('show_process', True)
 
-        # Configure transformer based on format
-        format_name = config.get('format')
-        if format_name:
-            # Get transformer config from global transformers section
-            transformer_config = self.get_transformer_config(format_name)
-            transformer = create_transformer(format_name, transformer_config)
-            self._transformers = [transformer]
+        self._configure_formatter()
 
-    def get_transformer_config(self, format_name):
-        """Get transformer configuration from global transformers section.
+    def _configure_formatter(self):
+        """Configure the formatter based on configuration."""
+        format_name = self._config.get('format', 'text')
+        
+        try:
+            # Get formatter config from global formatters section
+            formatter_config = self.get_formatter_config(format_name)
+            formatter = create_formatter(format_name, formatter_config)
+            self._formatters = [formatter]
+        except Exception as e:
+            warnings.warn(f"Failed to configure formatter {format_name}: {e}. Using default text formatter.")
+            # Use a default text formatter as fallback
+            formatter = create_formatter('text', {})
+            self._formatters = [formatter]
+
+    def get_formatter_config(self, format_name):
+        """Get formatter configuration from global formatters section.
         
         Args:
-            format_name: Name of the format/transformer
+            format_name: Name of the format/formatter
             
         Returns:
-            Dict[str, Any]: Transformer configuration
+            Formatter configuration dictionary
         """
-        # Access the global transformers configuration
-        transformers_config = self._config.get('transformers', {})
-        transformer_entry = transformers_config.get(format_name, {})
-        return transformer_entry.get('config', {})
+        # Access the global formatters configuration
+        formatters_config = self._config.get('formatters', {})
+        return formatters_config.get(format_name, {})
 
     def _get_color(self, level):
         """Get the color code for a log level.
@@ -120,8 +129,8 @@ class ConsoleListener(BaseListener):
         if not self.enabled:
             return
 
-        # Apply transformers and ensure application name
-        transformed_message = self._apply_transformers(message)
+        # Apply formatters and ensure application name
+        transformed_message = self._apply_formatters(message)
 
         # Extract log details
         timestamp = transformed_message.get('timestamp', '')

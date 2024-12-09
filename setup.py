@@ -66,10 +66,10 @@ setup(
             'azure_appinsights = skyarclog.listeners.azure.azure_appinsights_listener:AzureAppInsightsListener [azure]',
             'ms_sql = skyarclog.listeners.sql.mssql_listener:MsSqlListener [sql]',
         ],
-        'skyarclog.transformers': [
-            'json = skyarclog.transformers.json.json_transformer:JsonTransformer',
-            'sql = skyarclog.transformers.sql.sql_transformer:SqlTransformer [sql]',
-            'protobuf = skyarclog.transformers.protobuf.protobuf_transformer:ProtobufTransformer [protobuf]',
+        'skyarclog.formatters': [
+            'json = skyarclog.formatters.json.json_formatter:JsonTransformer',
+            'sql = skyarclog.formatters.sql.sql_formatter:SqlTransformer [sql]',
+            'protobuf = skyarclog.formatters.protobuf.protobuf_formatter:ProtobufTransformer [protobuf]',
         ],
     },
     

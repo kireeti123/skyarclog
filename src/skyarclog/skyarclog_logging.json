@@ -3,25 +3,16 @@
     "name": "Client App 1",
     "formatters": {
         "json": {
-            "type": "json_formatter",
-            "config": {
-                "indent": 2,
-                "sort_keys": true
-            }
+            "indent": 2,
+            "sort_keys": true
         },
         "sql": {
-            "type": "sql_formatter",
-            "config": {
-                "date_format": "%Y-%m-%d %H:%M:%S.%f",
-                "max_field_length": 4000
-            }
+            "date_format": "%Y-%m-%d %H:%M:%S.%f",
+            "max_field_length": 4000
         },
         "protobuf": {
-            "type": "protobuf_transformer",
-            "config": {
-                "preserve_proto_field_names": true,
-                "message_type": "LogMessage"
-            }
+            "preserve_proto_field_names": true,
+            "message_type": "LogMessage"
         }
     },
     "listeners": {
@@ -45,7 +36,7 @@
         },
         "file": {
             "enabled": true,
-            "transformer": "json",
+            "formatter": "json",
             "path": "/var/log/skyarclog/app.log",
             "max_size": "500MB",
             "backup_count": 10,
@@ -103,7 +94,7 @@
         },
         "azure-blob": {
             "enabled": true,
-            "transformer": "protobuf",
+            "formatter": "protobuf",
             "container_connection_string": "${kv:STORAGE-CONNECTION-STRING}",
             "container_name": "${kv:BLOB-CONTAINER-NAME}",
             "folder_structure": "{year}/{month}/{day}/{hour}",
@@ -134,9 +125,9 @@
                 "delete_after_days": 365
             }
         },
-        "ms-sql": {
+        "azure-ms-sql": {
             "enabled": true,
-            "transformer": "sql",
+            "formatter": "sql",
             "connection_string": "${kv:SQL-CONNECTION-STRING}",
             "table_name": "ApplicationLogs",
             "schema_name": "dbo",

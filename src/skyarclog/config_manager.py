@@ -28,7 +28,7 @@ class ConfigManager:
     DEFAULT_CONFIG = {
         "version": 1.0,
         "name": "SkyArcLog Default App",
-        "transformers": {},
+        "formatters": {},
         "listeners": {
             "console": {
                 "enabled": True,

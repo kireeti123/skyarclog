@@ -10,7 +10,7 @@ SkyArcLog is a powerful, flexible, and extensible logging framework designed to 
 - 🔍 **Dynamic Log Routing**: Level-specific handler assignment
 - 🚀 **Multiple Listeners**: Supports console, file, Azure Blob, Azure App Insights, and more
 - 🔒 **Security-First**: Built-in encryption and key rotation
-- 🌐 **Transformer Support**: JSON, SQL, and Protobuf transformers
+- 🌐 **Transformer Support**: JSON, SQL, and Protobuf formatters
 - 🔧 **Highly Configurable**: Granular control over log formatting, colors, and output
 
 ## Installation
@@ -98,7 +98,7 @@ The SkyArcLog framework supports a flexible JSON-based configuration with the fo
 
 - `version`: Configuration version (currently `1.0`)
 - `name`: Application name (optional, defaults to 'Application')
-- `transformers`: Message transformation configurations
+- `formatters`: Message transformation configurations
 - `listeners`: Log destination and output configurations
 - `loggers`: Logger-specific settings
 
@@ -108,7 +108,7 @@ The SkyArcLog framework supports a flexible JSON-based configuration with the fo
 {
     "version": 1.0,
     "name": "MyApplication",
-    "transformers": {
+    "formatters": {
         "json": {
             "type": "json",
             "indent": 2
@@ -178,7 +178,7 @@ You can extend the framework by creating custom listeners that implement the `Ba
 
 - Lightweight, minimal overhead logging framework
 - Supports buffered and asynchronous logging
-- Configurable log levels and transformers
+- Configurable log levels and formatters
 
 ## Repository Structure
 
@@ -227,11 +227,11 @@ skyarclog/
 │       │   └── console/
 │       │       └── console_listener.py
 │       │
-│       └── transformers/
+│       └── formatters/
 │           ├── __init__.py
-│           ├── base_transformer.py
-│           ├── text_transformer.py
-│           └── json_transformer.py
+│           ├── base_formatter.py
+│           ├── text_formatter.py
+│           └── json_formatter.py
 │
 ├── tests/
 │   └── ... (test files)
@@ -278,7 +278,7 @@ skyarclog/
 |-------|------|----------|---------|-------------|
 | `version` | Number | Optional | `1.0` | Configuration version |
 | `name` | String | Optional | `"Application"` | Optional application name for identification (not used as a default logger name) |
-| `transformers` | Object | Optional | `{}` | Transformer configurations |
+| `formatters` | Object | Optional | `{}` | Transformer configurations |
 | `listeners` | Object | Optional | `{}` | Listener configurations |
 | `loggers` | Object | **Required** | N/A | Logger configurations |
 
@@ -296,7 +296,7 @@ Each listener has its own specific configuration. Here are some common fields:
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `enabled` | Boolean | Optional | `true` | Whether the listener is active |
-| `transformer` | String | Optional | `null` | Name of the transformer to use |
+| `formatter` | String | Optional | `null` | Name of the formatter to use |
 
 ##### Console Listener Specific Configuration
 
@@ -340,8 +340,8 @@ Each listener has its own specific configuration. Here are some common fields:
 {
     "version": 1.0,
     "name": "My Complex Application",
-    "transformers": {
-        "json_transformer": {
+    "formatters": {
+        "json_formatter": {
             "type": "json",
             "config": {
                 "timestamp_format": "%Y-%m-%d %H:%M:%S",
@@ -353,7 +353,7 @@ Each listener has its own specific configuration. Here are some common fields:
         "primary_console": {
             "type": "console",
             "enabled": true,
-            "transformer": "json_transformer",
+            "formatter": "json_formatter",
             "colors": {
                 "enabled": true,
                 "ERROR": "red,bold"
@@ -387,7 +387,7 @@ Each listener has its own specific configuration. Here are some common fields:
 
 1. The configuration supports both simple list-based and advanced dictionary-based handler routing.
 2. Not all listeners need to be configured for every log level.
-3. Listeners and transformers are optional but recommended for comprehensive logging.
+3. Listeners and formatters are optional but recommended for comprehensive logging.
 4. Always keep sensitive information like connection strings secure and out of version control.
 5. The `name` field is purely for identification and documentation purposes
 6. It does not set a default name for the root logger
@@ -421,19 +421,19 @@ Each listener has its own specific configuration. Here are some common fields:
      }
      ```
 
-3. **`transformers`**
+3. **`formatters`**
    - Purpose: Define data transformation rules
    - Type: Object
    - Default: `{}`
    - Nested Keys:
-     - Transformer Name (e.g., `"json_transformer"`)
+     - Transformer Name (e.g., `"json_formatter"`)
        - `type`: Transformation type (`"json"`, `"sql"`)
        - `config`: Transformation-specific settings
    - Example:
      ```json
      {
-         "transformers": {
-             "json_transformer": {
+         "formatters": {
+             "json_formatter": {
                  "type": "json",
                  "config": {
                      "timestamp_format": "%Y-%m-%d %H:%M:%S",
@@ -452,7 +452,7 @@ Each listener has its own specific configuration. Here are some common fields:
      - Listener Name (e.g., `"console_log"`)
        - `type`: Listener type (`"console"`, `"azure-blob"`)
        - `enabled`: Whether listener is active
-       - `transformer`: Optional transformer name
+       - `formatter`: Optional formatter name
        - Listener-specific configuration
    - Example:
      ```json
@@ -461,7 +461,7 @@ Each listener has its own specific configuration. Here are some common fields:
              "primary_console": {
                  "type": "console",
                  "enabled": true,
-                 "transformer": "json_transformer",
+                 "formatter": "json_formatter",
                  "colors": {
                      "enabled": true,
                      "ERROR": "red,bold"
@@ -500,7 +500,7 @@ Each listener has its own specific configuration. Here are some common fields:
 1. Top-level keys are processed in this order:
    - `version`
    - `name`
-   - `transformers`
+   - `formatters`
    - `listeners`
    - `loggers`
 
@@ -522,7 +522,7 @@ Each listener has its own specific configuration. Here are some common fields:
 
 #### Best Practices
 
-- Use meaningful, unique names for transformers and listeners
+- Use meaningful, unique names for formatters and listeners
 - Keep sensitive information out of configuration files
 - Use environment variables or secret management for credentials
 - Validate configuration before deployment

@@ -1,20 +1,20 @@
-"""JSON transformer for message formatting."""
+"""JSON formatter for message formatting."""
 
 import json
 from typing import Any, Dict
-from .base_transformer import BaseTransformer
+from .base_formatter import BaseFormatter
 
 
-class JsonTransformer(BaseTransformer):
+class JsonTransformer(BaseFormatter):
     """JSON message formatter."""
 
     def __init__(self):
-        """Initialize the JSON transformer."""
+        """Initialize the JSON formatter."""
         self.indent = None
         self.sort_keys = False
 
     def configure(self, indent: int = None, sort_keys: bool = False) -> None:
-        """Configure the transformer.
+        """Configure the formatter.
         
         Args:
             indent: Number of spaces for indentation (default: None)
